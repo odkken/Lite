@@ -27,14 +27,22 @@ namespace Lite
 
             var mirror = new Mirror(new Vector2f(200, 0));
 
+
             var beam = new LightRay(new Vector2f(500, 100), new Vector2f(-50, 10), () => new List<Mirror>
-            {
-                mirror
-            });
+                {
+                    mirror
+                }, 
+                () => Mouse.IsButtonPressed(Mouse.Button.Left), () =>
+                {
+                    var pos = Mouse.GetPosition(window);
+                    return new Vector2f(pos.X, pos.Y);
+                }
+            );
             while (window.IsOpen)
             {
                 window.DispatchEvents();
                 window.Clear(Color.Black);
+                beam.Update();
                 window.Draw(beam);
                 window.Draw(mirror);
                 window.Display();

@@ -8,22 +8,37 @@ namespace Lite
 {
     public class LightRay : Drawable
     {
-        private readonly List<Beam> _beams;
+        private readonly Vector2f _origin;
+        private Vector2f _direction;
+        private readonly Func<List<Mirror>> _getAllMirrors;
+        private readonly Func<bool> _isMouseDown;
+        private readonly Func<Vector2f> _getMousePos;
+        private List<Beam> _beams;
 
-        public LightRay(Vector2f origin, Vector2f direction, Func<List<Mirror>> getAllMirrors)
+        public LightRay(Vector2f origin, Vector2f direction, Func<List<Mirror>> getAllMirrors, Func<bool> isMouseDown, Func<Vector2f> getMousePos)
+        {
+            _origin = origin;
+            _direction = direction;
+            _getAllMirrors = getAllMirrors;
+            _isMouseDown = isMouseDown;
+            _getMousePos = getMousePos;
+            CalculateBeams();
+        }
+
+        void CalculateBeams()
         {
             _beams = new List<Beam>();
-            var mirrors = getAllMirrors();
+            var mirrors = _getAllMirrors();
 
             var anyIntersections = false;
             var closestIntersection = new Vector2f();
-            var info = MathUtil.GetLineInfo(origin, direction);
+            var info = MathUtil.GetLineInfo(_origin, _direction);
             foreach (var mirror in mirrors)
             {
                 if (mirror.TryGetIntersection(info, out Vector2f intersection))
                 {
 
-                    if (!anyIntersections || (intersection - origin).SquareMagnitude() < (closestIntersection - origin).SquareMagnitude())
+                    if (!anyIntersections || (intersection - _origin).SquareMagnitude() < (closestIntersection - _origin).SquareMagnitude())
                     {
                         anyIntersections = true;
                         closestIntersection = intersection;
@@ -31,14 +46,17 @@ namespace Lite
                 }
             }
 
-            _beams.Add(new Beam(2, origin, anyIntersections ? (closestIntersection - origin) : direction * 100000, Color.Yellow));
+            _beams.Add(new Beam(2, _origin, anyIntersections ? (closestIntersection - _origin) : _direction * 100000, Color.Yellow));
 
         }
 
-
         public void Update()
         {
-            
+            if (_isMouseDown())
+            {
+                _direction = _getMousePos() - _origin;
+                CalculateBeams();
+            }
         }
 
         public void Draw(RenderTarget target, RenderStates states)
