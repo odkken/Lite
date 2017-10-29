@@ -15,6 +15,12 @@ namespace Lite
             return vector.X * vector.X + vector.Y * vector.Y;
         }
 
+
+        public static float UnNormalizedDot(this Vector2f me, Vector2f other)
+        {
+            return me.X * other.X + me.Y * other.Y;
+        }
+
         public class LineInfo
         {
             public float A { get; set; }

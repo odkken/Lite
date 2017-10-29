@@ -10,6 +10,7 @@ namespace Lite
         public Vector2f Representation { get; }
         public Vector2f Origin { get; }
         private readonly RectangleShape _rect;
+        public Tuple<Vector2f, Vector2f> Endpoints { get; }
 
         public Beam(float width, Vector2f origin, Vector2f representation, Color color)
         {
@@ -21,6 +22,7 @@ namespace Lite
                 FillColor = color,
                 Rotation = -360 * MathF.Atan2(representation.X, representation.Y) / (2 * MathF.PI)
             };
+            Endpoints = new Tuple<Vector2f, Vector2f>(origin, origin + representation);
         }
 
         public void Draw(RenderTarget target, RenderStates states)

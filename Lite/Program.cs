@@ -25,7 +25,7 @@ namespace Lite
                     window.Close();
             };
 
-            var mirror = new Mirror(new Vector2f(200, 0));
+            var mirror = new Mirror(new Vector2f(200, 200));
 
 
             var beam = new LightRay(new Vector2f(500, 100), new Vector2f(-50, 10), () => new List<Mirror>
