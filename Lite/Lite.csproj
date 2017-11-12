@@ -36,6 +36,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="sfmlnet-audio-2">
       <HintPath>sfml\sfmlnet-audio-2.dll</HintPath>
     </Reference>

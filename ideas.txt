@@ -1,0 +1,2 @@
+invert occlusion (rotationally)
+	light hits a mirror, bounces off at some linear proportion of that mirror scaled to the non-occluded arc path of the light source

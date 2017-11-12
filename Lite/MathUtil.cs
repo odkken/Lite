@@ -1,10 +1,23 @@
 using System;
+using System.Security.Cryptography;
+using SFML.Graphics;
 using SFML.System;
 
 namespace Lite
 {
     public static class MathUtil
     {
+
+        static readonly RandomNumberGenerator Rng = new RNGCryptoServiceProvider();
+        static readonly byte[] Bytes = new byte[4];
+
+        public static Random RNG = new Random();
+        //public static float GetRandom()
+        //{
+        //    //Rng.GetBytes(Bytes);
+        //    //return BitConverter.ToSingle(Bytes, 0);
+        //}
+
         public static float Magnitude(this Vector2f vector)
         {
             return MathF.Sqrt(vector.SquareMagnitude());
@@ -14,9 +27,28 @@ namespace Lite
         {
             return vector.X * vector.X + vector.Y * vector.Y;
         }
+        public static Vector2f Normalize(this Vector2f vector)
+        {
+            return vector / vector.Magnitude();
+        }
+
+        public static float Lerp(this float from, float to, float fraction)
+        {
+            return from + (to - from) * fraction;
+        }
+
+        public static byte Lerp(this byte from, byte to, float fraction)
+        {
+            return (byte)(from + (to - from) * fraction);
+        }
+
+        public static Color Lerp(this Color from, Color to, float fraction)
+        {
+            return new Color(from.R.Lerp(to.R, fraction), from.G.Lerp(to.G, fraction), from.B.Lerp(to.B, fraction), from.A.Lerp(to.A, fraction));
+        }
 
 
-        public static float UnNormalizedDot(this Vector2f me, Vector2f other)
+        public static float Dot(this Vector2f me, Vector2f other)
         {
             return me.X * other.X + me.Y * other.Y;
         }
@@ -44,6 +76,14 @@ namespace Lite
                 B = b,
                 C = a * x1 + b * y1
             };
+        }
+
+
+        public static Vector2f CalculateReflection(Vector2f incedent, Vector2f surface)
+        {
+            var incidentAlongSurface = surface * incedent.Dot(surface) / surface.SquareMagnitude();
+
+            return -incedent + 2 * incidentAlongSurface;
         }
     }
 }
