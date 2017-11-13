@@ -248,7 +248,8 @@ namespace Lite
         private void DeleteSelected()
         {
             var leftmost = Math.Min(_cursorIndex, _selectionOrigin);
-            _text.DisplayedString = _text.DisplayedString.Remove(leftmost, Math.Abs(_cursorIndex - _selectionOrigin));
+            var range = Math.Abs(_cursorIndex - _selectionOrigin);
+            _text.DisplayedString = _text.DisplayedString.Remove(leftmost, Math.Min(range, _text.DisplayedString.Length - leftmost));
             _cursorIndex = leftmost;
             _selectionActive = false;
         }
