@@ -15,6 +15,8 @@ namespace Lite
 
         public List<string> RunCommand(string command)
         {
+            if(string.IsNullOrEmpty(command))
+                return new List<string>();
             var split = command.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim());
             var c = _commands.SingleOrDefault(a => a.Name == split.First());
             return c == null ? new List<string> { $"{split.First()}: command not found" } : c.Invoke(split.Skip(1).ToArray());

@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.4.0" />
+    <PackageReference Include="morelinq" Version="2.8.0" />
   </ItemGroup>
 
   <ItemGroup>

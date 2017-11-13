@@ -33,7 +33,6 @@ namespace Lite
             var commandExtractor = new CommandExtractor();
             var commands = commandExtractor.GetAllStaticCommands(Assembly.GetExecutingAssembly());
             var terminal = new Terminal(window, consoleFont, terminalInput, new CommandRunner(commands));
-
             while (window.IsOpen)
             {
                 timeInfo.Tick();
