@@ -5,7 +5,12 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
   <ItemGroup>
+    <None Remove="kernel32.dll" />
     <None Remove="sfml\csfml-audio-2.dll" />
     <None Remove="sfml\csfml-graphics-2.dll" />
     <None Remove="sfml\csfml-system-2.dll" />
@@ -27,6 +32,9 @@
     <EmbeddedResource Include="csfml-window-2.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="kernel32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="libsndfile-1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -36,7 +44,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.4.0" />
     <PackageReference Include="morelinq" Version="2.8.0" />
   </ItemGroup>
 
@@ -54,7 +61,7 @@
       <HintPath>sfml\sfmlnet-window-2.dll</HintPath>
     </Reference>
   </ItemGroup>
-
+  
   <ItemGroup>
     <None Update="OpenTK.Compatibility.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

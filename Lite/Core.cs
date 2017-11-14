@@ -1,7 +1,4 @@
-﻿using System;
-using SFML.Window;
-
-namespace Lite
+﻿namespace Lite
 {
     public static class Core
     {

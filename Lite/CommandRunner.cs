@@ -15,7 +15,7 @@ namespace Lite
 
         public List<string> RunCommand(string command)
         {
-            if(string.IsNullOrEmpty(command))
+            if(string.IsNullOrWhiteSpace(command))
                 return new List<string>();
             var split = command.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(a => a.Trim());
             var c = _commands.SingleOrDefault(a => a.Name == split.First());

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.System;
 
 namespace Lite
@@ -21,5 +19,7 @@ namespace Lite
         void HandleMouseDown(Vector2f position, bool shift);
         void HandleMouseUp(Vector2f position);
         void HandleMouseMoved(Vector2f position);
+        void SetHighlightColor(Color color);
+        string SelectedText { get; }
     }
 }

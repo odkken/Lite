@@ -40,6 +40,11 @@ namespace Lite
         private float _lastHistoryRecalledTime;
         private readonly ICursorizedText _inputText;
 
+        public void SetHighlightColor(Color color)
+        {
+            _inputText.SetHighlightColor(color);
+        }
+
         public Terminal(RenderWindow window, Font font, IInput input, ICommandRunner commandRunner)
         {
             _closedYPos = window.Size.Y / 2f;
@@ -73,7 +78,7 @@ namespace Lite
             };
             _inputHistory = new List<string>();
 
-            _inputText = new CursorizedText(new Text("Hello, Sailor!", font, _characterSize),
+            _inputText = new CursorizedText(new Text("", font, _characterSize),
                 _inputBackground.GetGlobalBounds, _characterSize,
                 () =>
                 {
@@ -186,6 +191,16 @@ namespace Lite
                     case Keyboard.Key.A:
                         if (args.Control)
                             _inputText.SelectAll();
+                        break;
+                    case Keyboard.Key.C:
+                        if (args.Control)
+                        {
+                            Clippy.PushStringToClipboard(_inputText.SelectedText);
+                        }
+                        break;
+                    case Keyboard.Key.V:
+                        if (args.Control)
+                            _inputText.AddString(Clippy.GetText());
                         break;
                 }
             };

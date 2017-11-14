@@ -52,7 +52,7 @@ namespace Lite
 
                             if (returnVal is IEnumerable<object>)
                                 return (returnVal as IEnumerable<object>).Select(a => a.ToString()).ToList();
-                            return new List<string> { returnVal.ToString() };
+                            return new List<string> { returnVal?.ToString() };
                         }
                     });
                 }

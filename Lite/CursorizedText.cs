@@ -148,6 +148,21 @@ namespace Lite
                 _selectionActive = true;
         }
 
+        public void SetHighlightColor(Color color)
+        {
+            _selectionRect.FillColor = color;
+        }
+
+        public string SelectedText
+        {
+            get
+            {
+                var leftMost = Math.Min(_cursorIndex, _selectionOrigin);
+                var rightMost = Math.Max(_cursorIndex, _selectionOrigin);
+                return _text.DisplayedString.Substring(leftMost, rightMost - leftMost);
+            }
+        }
+
         public void Delete()
         {
             if (_selectionActive)
