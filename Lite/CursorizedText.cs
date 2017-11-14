@@ -38,7 +38,11 @@ namespace Lite
         {
             var cursorScale = .75f;
             var bounds = _getBounds();
-            _text.Position = new Vector2f(bounds.Left + _characterSize * .2f, bounds.Top);
+            var padding = _characterSize * .2f;
+            _text.Position = new Vector2f(bounds.Left + padding, bounds.Top);
+            var textBounds = _text.GetGlobalBounds();
+            if (textBounds.Left + textBounds.Width > bounds.Width - padding)
+                _text.Position -= new Vector2f(textBounds.Left + textBounds.Width - (bounds.Width) + padding, 0);
             _text.Draw(target, states);
             var cursorHeight = bounds.Height * cursorScale;
             if (_selectionActive)
