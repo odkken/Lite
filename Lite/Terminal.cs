@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MoreLinq;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -13,24 +14,22 @@ namespace Lite
         Open
     }
 
-
     public class Terminal : Drawable
     {
-        private static readonly uint _characterSize = 26;
+        private static readonly uint _characterSize = 16;
         private readonly float _closedYPos;
         private readonly RectangleShape _inputBackground;
 
-        private readonly Color _inputBackgroundColor = new Color(42, 74, 127);
+        private readonly Color _inputBackgroundColor = new Color(30, 30, 30, 220);
 
-        private readonly List<string> _inputHistory;
-        private readonly List<string> _reportLines;
         private readonly float _openingRate = 7f;
 
         private readonly RectangleShape _reportBackground;
-        private readonly Color _reportBackgroundColor = new Color(53, 86, 140);
-        private readonly Text _reportText;
+        private readonly Color _reportBackgroundColor = new Color(10, 10, 10, 220);
+        private List<string> _inputHistory = new List<string>();
         private float _currentOpenness;
-        private Color _inputTextColor = new Color(255, 252, 188);
+        private static readonly Color InputTextColor = new Color(255, 252, 188);
+        private static readonly Color ResponseTextColor = new Color(255, 188, 188);
         private float _lastInputTime;
         private float _maxOpenness = .7f;
         private OpenState _state = OpenState.Closed;
@@ -39,18 +38,22 @@ namespace Lite
         public float xOffset = _characterSize * .2f;
         private float _lastHistoryRecalledTime;
         private readonly ICursorizedText _inputText;
+        private Font _font;
 
         public void SetHighlightColor(Color color)
         {
             _inputText.SetHighlightColor(color);
         }
 
+        private IWrappedTextRenderer reportText;
         public Terminal(RenderWindow window, Font font, IInput input, ICommandRunner commandRunner)
         {
+            _font = font;
             _closedYPos = window.Size.Y / 2f;
             _reportBackground = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y / 2f))
             {
-                FillColor = _reportBackgroundColor
+                FillColor = _reportBackgroundColor,
+
             };
             _inputBackground =
                 new RectangleShape(new Vector2f(window.Size.X, font.GetLineSpacing(_characterSize) * 1.1f))
@@ -63,19 +66,15 @@ namespace Lite
             {
                 Font = font,
                 CharacterSize = _characterSize,
-                Color = _inputTextColor,
+                Color = InputTextColor,
                 DisplayedString = "Hi Buddy Waz Sup.<><>"
             };
 
-
-
-            _reportLines = new List<string>
+            reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), font, _characterSize, new Dictionary<Tag, Color>
             {
-                "DO U HAVE ANY COUNDOM",
-                "ok, delete your archives and remember",
-                "Mrs. Kayla Marie Armstrong............",
-                "i love you more, then anything"
-            };
+                { Tag.Input, InputTextColor},
+                { Tag.Response, ResponseTextColor}
+            });
             _inputHistory = new List<string>();
 
             _inputText = new CursorizedText(new Text("", font, _characterSize),
@@ -86,9 +85,6 @@ namespace Lite
                     fraction *= fraction;
                     return Color.White.Lerp(new Color(255, 255, 255, 0), fraction);
                 });
-
-            _reportText = new Text { Font = font, CharacterSize = _characterSize };
-
 
             var inputHistoryIndex = 0;
             var toggled = false;
@@ -126,11 +122,13 @@ namespace Lite
                                 if (actualInputText.DisplayedString.Length != 0)
                                 {
                                     var inputString = _inputText.ToString();
+                                    if (string.IsNullOrWhiteSpace(inputString))
+                                        break;
                                     _inputText.SetString("");
                                     _inputHistory.Add(inputString);
                                     inputHistoryIndex = _inputHistory.Count;
-                                    _reportLines.Add(">" + inputString);
-                                    commandRunner.RunCommand(inputString).ForEach(_reportLines.Add);
+                                    reportText.AddLine(inputString, Tag.Input);
+                                    commandRunner.RunCommand(inputString).ForEach(a => reportText.AddLine(a, Tag.Response));
                                 }
                                 break;
                             default:
@@ -164,8 +162,8 @@ namespace Lite
                             inputHistoryIndex++;
                             if (inputHistoryIndex >= _inputHistory.Count)
                                 inputHistoryIndex = _inputHistory.Count - 1;
+                            _inputText.SetString(_inputHistory[inputHistoryIndex]);
                         }
-                        _inputText.SetString(_inputHistory[inputHistoryIndex]);
                         break;
                     case Keyboard.Key.Left:
                         _inputText.RecedeCursor(args.Control, args.Shift);
@@ -198,6 +196,13 @@ namespace Lite
                             Clippy.PushStringToClipboard(_inputText.SelectedText);
                         }
                         break;
+                    case Keyboard.Key.X:
+                        if (args.Control)
+                        {
+                            Clippy.PushStringToClipboard(_inputText.SelectedText);
+                            _inputText.Delete();
+                        }
+                        break;
                     case Keyboard.Key.V:
                         if (args.Control)
                             _inputText.AddString(Clippy.GetText());
@@ -213,6 +218,7 @@ namespace Lite
 
         public bool IsOpen => _currentOpenness > 0;
 
+
         public void Draw(RenderTarget target, RenderStates states)
         {
             UpdateOpenness();
@@ -220,20 +226,10 @@ namespace Lite
             {
                 _reportBackground.Position = new Vector2f(0, _closedYPos * (_currentOpenness - 1));
                 var bounds = _reportBackground.GetGlobalBounds();
-                _inputBackground.Position = new Vector2f(0, bounds.Top + bounds.Height);
+                _inputBackground.Position = new Vector2f(0, (int)(bounds.Top + bounds.Height));
                 _reportBackground.Draw(target, states);
 
-                _reportText.DisplayedString = "";
-                var lines = _reportLines.ToList();
-                for (var i = lines.Count - 1; i >= 0; i--)
-                {
-                    _reportText.DisplayedString = lines[i] + "\n" + _reportText.DisplayedString;
-                    if (_reportText.GetLocalBounds().Height > _reportBackground.GetLocalBounds().Height)
-                        break;
-                }
-                _reportText.Position = new Vector2f(xOffset,
-                    bounds.Top + bounds.Height - _reportText.GetGlobalBounds().Height + 2 * xOffset);
-                _reportText.Draw(target, states);
+                reportText.Draw(target, states);
                 _inputBackground.Draw(target, states);
                 _inputText.Draw(target, states);
             }

@@ -191,8 +191,8 @@ namespace Lite
         public void SelectAll()
         {
             _selectionActive = true;
-            _selectionOrigin = 0;
-            _cursorIndex = _text.DisplayedString.Length;
+            _selectionOrigin = _text.DisplayedString.Length;
+            _cursorIndex = 0;
         }
 
         public void Backspace()
@@ -215,6 +215,7 @@ namespace Lite
             if (_selectionActive)
                 DeleteSelected();
             _text.DisplayedString = _text.DisplayedString.Insert(_cursorIndex, text);
+            _text.DisplayedString = _text.DisplayedString.Substring(0, Math.Min(2500, _text.DisplayedString.Length));
             _cursorIndex += text.Length;
             ClampCursor();
         }
