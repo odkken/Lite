@@ -28,8 +28,8 @@ namespace Lite
         private readonly Color _reportBackgroundColor = new Color(10, 10, 10, 220);
         private List<string> _inputHistory = new List<string>();
         private float _currentOpenness;
-        private static readonly Color InputTextColor = new Color(255, 252, 188);
-        private static readonly Color ResponseTextColor = new Color(255, 188, 188);
+        private static readonly Color InputTextColor = new Color(155, 255, 255);
+        private static readonly Color ResponseTextColor = new Color(255, 220, 220);
         private float _lastInputTime;
         private float _maxOpenness = .7f;
         private OpenState _state = OpenState.Closed;
@@ -38,7 +38,6 @@ namespace Lite
         public float xOffset = _characterSize * .2f;
         private float _lastHistoryRecalledTime;
         private readonly ICursorizedText _inputText;
-        private Font _font;
 
         public void SetHighlightColor(Color color)
         {
@@ -48,7 +47,6 @@ namespace Lite
         private IWrappedTextRenderer reportText;
         public Terminal(RenderWindow window, Font font, IInput input, ICommandRunner commandRunner)
         {
-            _font = font;
             _closedYPos = window.Size.Y / 2f;
             _reportBackground = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y / 2f))
             {
@@ -77,7 +75,7 @@ namespace Lite
             });
             _inputHistory = new List<string>();
 
-            _inputText = new CursorizedText(new Text("", font, _characterSize),
+            _inputText = new CursorizedText(new Text("", font, _characterSize){Color = InputTextColor},
                 _inputBackground.GetGlobalBounds, _characterSize,
                 () =>
                 {
@@ -119,7 +117,6 @@ namespace Lite
                                 }
                                 break;
                             case "\r":
-                                if (actualInputText.DisplayedString.Length != 0)
                                 {
                                     var inputString = _inputText.ToString();
                                     if (string.IsNullOrWhiteSpace(inputString))

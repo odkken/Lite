@@ -32,19 +32,41 @@ namespace Lite
             _getCursorColor = getCursorColor;
             _cursor = new RectangleShape();
             _selectionRect = new RectangleShape { FillColor = new Color(100, 100, 100, 100) };
+            AlignTextAndCursor();
         }
 
         public void Draw(RenderTarget target, RenderStates states)
         {
+            _text.Position = new Vector2f(_text.Position.X, _getBounds().Top);
+            if (_selectionActive)
+                _selectionRect.Draw(target, states);
+            _cursor.FillColor = _getCursorColor();
+            _text.Draw(target, states);
+            _cursor.Draw(target, states);
+            line?.Draw(target, states);
+        }
+
+        void AlignTextAndCursor()
+        {
             var cursorScale = .75f;
             var bounds = _getBounds();
             var padding = _characterSize * .2f;
-            _text.Position = new Vector2f(bounds.Left + padding, bounds.Top);
-            var textBounds = _text.GetGlobalBounds();
-            if (textBounds.Left + textBounds.Width > bounds.Width - padding)
-                _text.Position -= new Vector2f(textBounds.Left + textBounds.Width - (bounds.Width) + padding, 0);
-            _text.Draw(target, states);
+            var leftJustification = (int)(bounds.Left + padding);
+            var rightJustification = (int)(bounds.Left + bounds.Width - padding);
             var cursorHeight = bounds.Height * cursorScale;
+            _cursor.Position = new Vector2f(_text.FindCharacterPos((uint)_cursorIndex).X + _text.Position.X, bounds.Top + bounds.Height * (1 - cursorScale) / 2f);
+            if (_cursor.Position.X < leftJustification)
+            {
+                var shift = leftJustification - (int)_text.FindCharacterPos((uint)_cursorIndex).X + 1;
+                _text.Position = new Vector2f(shift, _text.Position.Y);
+                _cursor.Position = new Vector2f(leftJustification, _cursor.Position.Y);
+            }
+            else if (_cursor.Position.X > rightJustification)
+            {
+                var shift = (int)_text.FindCharacterPos((uint)_cursorIndex).X - rightJustification;
+                _text.Position = new Vector2f(-shift, _text.Position.Y);
+                _cursor.Position = new Vector2f(rightJustification, _cursor.Position.Y);
+            }
             if (_selectionActive)
             {
                 var leftmostSpot = _text.FindCharacterPos((uint)Math.Min(_cursorIndex, _selectionOrigin)).X;
@@ -52,14 +74,8 @@ namespace Lite
                 _selectionRect.Size = new Vector2f(rightmostSpot - leftmostSpot, cursorHeight);
                 _selectionRect.Position = new Vector2f(+_text.Position.X + leftmostSpot,
                     bounds.Top + bounds.Height * (1 - cursorScale) / 2f);
-                _selectionRect.Draw(target, states);
             }
             _cursor.Size = new Vector2f(1, cursorHeight);
-            _cursor.Position = new Vector2f(_text.FindCharacterPos((uint)_cursorIndex).X + _text.Position.X,
-                bounds.Top + bounds.Height * (1 - cursorScale) / 2f);
-            _cursor.FillColor = _getCursorColor();
-            _cursor.Draw(target, states);
-            line?.Draw(target, states);
         }
 
         public void AdvanceCursor(bool control, bool shift)
@@ -86,12 +102,14 @@ namespace Lite
         {
             HandleSelection(shift);
             _cursorIndex = 0;
+            AlignTextAndCursor();
         }
 
         public void End(bool shift)
         {
             HandleSelection(shift);
             _cursorIndex = _text.DisplayedString.Length;
+            AlignTextAndCursor();
         }
 
         private int _historyIndex = 0;
@@ -135,6 +153,7 @@ namespace Lite
             var indeces = Enumerable.Range(0, _text.DisplayedString.Length + 1).ToDictionary(a => a, a => _text.Position + _text.FindCharacterPos((uint)a));
             var closest = indeces.MinBy(a => (a.Value - position).SquareMagnitude());
             _cursorIndex = closest.Key;
+            AlignTextAndCursor();
         }
 
         public void HandleMouseUp(Vector2f position)
@@ -186,6 +205,7 @@ namespace Lite
             _selectionActive = false;
             _text.DisplayedString = s;
             _cursorIndex = _text.DisplayedString.Length;
+            AlignTextAndCursor();
         }
 
         public void SelectAll()
@@ -193,6 +213,7 @@ namespace Lite
             _selectionActive = true;
             _selectionOrigin = _text.DisplayedString.Length;
             _cursorIndex = 0;
+            AlignTextAndCursor();
         }
 
         public void Backspace()
@@ -240,6 +261,7 @@ namespace Lite
         private void ClampCursor()
         {
             _cursorIndex = Math.Clamp(_cursorIndex, 0, _text.DisplayedString.Length);
+            AlignTextAndCursor();
         }
 
         private int FindPrecedingWordEnd()
@@ -272,6 +294,7 @@ namespace Lite
             _text.DisplayedString = _text.DisplayedString.Remove(leftmost, Math.Min(range, _text.DisplayedString.Length - leftmost));
             _cursorIndex = leftmost;
             _selectionActive = false;
+            AlignTextAndCursor();
         }
     }
 }

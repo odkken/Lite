@@ -97,7 +97,7 @@ namespace Lite
                         if (text.FindCharacterPos((uint)lastSplitIndex).X - text.Position.X > bounds.Width)
                         {
                             lastSplitIndex--;
-                            shadowString = shadowString.Insert(lastSplitIndex, "\n");
+                            shadowString = shadowString.Insert(lastSplitIndex, "\n ");
                             text.DisplayedString = shadowString;
                             _texts.Last().NumLines++;
                             break;
