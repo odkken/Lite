@@ -180,13 +180,19 @@ namespace Lite
                     case Keyboard.Key.C:
                         if (args.Control)
                         {
-                            Clippy.PushStringToClipboard(_inputText.SelectedText);
+                            var selected = _inputText.SelectedText;
+                            if (string.IsNullOrWhiteSpace(selected))
+                                break;
+                                Clippy.PushStringToClipboard(selected);
                         }
                         break;
                     case Keyboard.Key.X:
                         if (args.Control)
                         {
-                            Clippy.PushStringToClipboard(_inputText.SelectedText);
+                            var selected = _inputText.SelectedText;
+                            if (string.IsNullOrWhiteSpace(selected))
+                                break;
+                            Clippy.PushStringToClipboard(selected);
                             _inputText.Delete();
                         }
                         break;

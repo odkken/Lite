@@ -24,7 +24,7 @@ namespace Lite
             _textViewport = new View(new FloatRect(_textOrigin, new Vector2f(getBounds().Width, getBounds().Height)));
         }
 
-        private View _textViewport;
+        private readonly View _textViewport;
 
         public void Draw(RenderTarget target, RenderStates states)
         {
@@ -43,7 +43,7 @@ namespace Lite
             public int NumLines { get; set; }
         }
 
-        readonly Vector2f _textOrigin = new Vector2f(0, 0);
+        readonly Vector2f _textOrigin = new Vector2f(200000, 200000);
         private readonly List<Tuple<string, Tag>> _receivedLines = new List<Tuple<string, Tag>>();
         private readonly List<WrappedTextItem> _texts = new List<WrappedTextItem>();
 
@@ -88,7 +88,7 @@ namespace Lite
             MoveViewportToBottom();
         }
 
-        private int scrollAmount = 50;
+        private readonly int scrollAmount = 50;
         public void ScrollUp()
         {
             MoveViewport(new Vector2f(0, -scrollAmount));

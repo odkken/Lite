@@ -158,11 +158,56 @@ namespace Lite
 
         }
 
+        int FindClosestPosition(Vector2f position, int startingFrom, int goingTo)
+        {
+            var closestDistance = (position - (_text.Position + _text.FindCharacterPos((uint)startingFrom))).SquareMagnitude();
+            var closestIndex = -1;
+            if (goingTo > startingFrom)
+                for (int i = startingFrom + 1; i <= goingTo; i++)
+                {
+                    var distance = (position - (_text.Position + _text.FindCharacterPos((uint)i))).SquareMagnitude();
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closestIndex = i;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            else
+            {
+                for (int i = startingFrom - 1; i >= goingTo; i--)
+                {
+                    var distance = (position - (_text.Position + _text.FindCharacterPos((uint)i))).SquareMagnitude();
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closestIndex = i;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            return closestIndex;
+        }
+
         void MoveCursorToClosestCharacter(Vector2f position)
         {
-            var indeces = Enumerable.Range(0, DisplayString.Length + 1).ToDictionary(a => a, a => _text.Position + _text.FindCharacterPos((uint)a));
-            var closest = indeces.MinBy(a => (a.Value - position).SquareMagnitude());
-            _cursorIndex = closest.Key;
+            var currentDistance = (position - (_text.Position + _text.FindCharacterPos((uint)_cursorIndex))).SquareMagnitude();
+            var distanceIfIncreaseIndex = (position - (_text.Position + _text.FindCharacterPos((uint)_cursorIndex + 1))).SquareMagnitude();
+            var distanceIfDecreaseIndex = (position - (_text.Position + _text.FindCharacterPos((uint)_cursorIndex - 1))).SquareMagnitude();
+            if (distanceIfDecreaseIndex < currentDistance)
+            {
+                _cursorIndex = FindClosestPosition(position, _cursorIndex, 0);
+            }
+            else if (distanceIfIncreaseIndex < currentDistance)
+            {
+                _cursorIndex = FindClosestPosition(position, _cursorIndex, DisplayString.Length);
+            }
             AlignTextAndCursor();
         }
 
