@@ -10,35 +10,30 @@ namespace Lite
     public class WrappedTextRenderer : IWrappedTextRenderer
     {
         private readonly Func<FloatRect> _getBounds;
+        private readonly Func<Vector2f> _getWindowDimensions;
         private readonly Font _font;
         private readonly uint _charSize;
 
-        public WrappedTextRenderer(Func<FloatRect> getBounds, Font font, uint charSize, Dictionary<Tag, Color> colorLookup)
+        public WrappedTextRenderer(Func<FloatRect> getBounds, Func<Vector2f> getWindowDimensions, Font font, uint charSize, Dictionary<Tag, Color> colorLookup)
         {
             _getBounds = getBounds;
+            _getWindowDimensions = getWindowDimensions;
             _font = font;
             _charSize = charSize;
             _colorLookup = colorLookup;
+            _textViewport = new View(new FloatRect(_textOrigin, new Vector2f(getBounds().Width, getBounds().Height)));
         }
+
+        private View _textViewport;
 
         public void Draw(RenderTarget target, RenderStates states)
         {
-            AlignTexts();
-            _texts.ForEach(a => a.Text.Draw(target, states));
-        }
-
-        void AlignTexts()
-        {
-            var spacing = _font.GetLineSpacing(_charSize);
             var bounds = _getBounds();
-            for (int i = 0; i < _texts.Count; i++)
-            {
-                var text = _texts[i].Text;
-                if (i == 0)
-                    text.Position = new Vector2f((int)bounds.Left, (int)(bounds.Top + bounds.Height - spacing * _texts[i].NumLines - spacing * .5f));
-                else
-                    text.Position = new Vector2f((int)bounds.Left, (int)(_texts[i - 1].Text.Position.Y - spacing * _texts[i].NumLines));
-            }
+            var windowSize = _getWindowDimensions();
+            _textViewport.Viewport = new FloatRect(bounds.Left / windowSize.X, bounds.Top / windowSize.Y, bounds.Width / windowSize.X, bounds.Height / windowSize.Y);
+            target.SetView(_textViewport);
+            _textsToDraw.ForEach(a => a.Text.Draw(target, states));
+            target.SetView(target.DefaultView);
         }
 
         class WrappedTextItem
@@ -48,70 +43,132 @@ namespace Lite
             public int NumLines { get; set; }
         }
 
+        readonly Vector2f _textOrigin = new Vector2f(0, 0);
         private readonly List<Tuple<string, Tag>> _receivedLines = new List<Tuple<string, Tag>>();
-        private List<WrappedTextItem> _texts = new List<WrappedTextItem>();
+        private readonly List<WrappedTextItem> _texts = new List<WrappedTextItem>();
+
         public void AddLine(string line, Tag tag)
         {
-            var bounds = _getBounds();
-            var roughCharacterLimit = (int)(2 * bounds.Width * bounds.Height / (_charSize * _charSize));
             _receivedLines.Add(Tuple.Create(line, tag));
-            _texts.Clear();
-            for (var index = _receivedLines.Count - 1; index >= 0; index--)
-            {
-                var currentText = _receivedLines[index].Item1;
-                var currentTag = _receivedLines[index].Item2;
-                if (currentText.Length > roughCharacterLimit)
-                    currentText = currentText.Substring(currentText.Length - roughCharacterLimit);
 
-                Text text;
-                if (_texts.Any() && _texts.Last().Tag == currentTag)
+            var shadowString = line;
+            var newText = new Text(shadowString, _font, _charSize) { Color = _colorLookup[tag] };
+            var lastSplitIndex = 0;
+
+            var bounds = _getBounds();
+            while (newText.GetLocalBounds().Width > bounds.Width)
+            {
+                for (; lastSplitIndex < shadowString.Length; lastSplitIndex++)
                 {
-                    text = _texts.Last().Text;
-                }
-                else
-                {
-                    text = new Text("", _font, _charSize) { Color = _colorLookup[currentTag] };
-                    _texts.Add(new WrappedTextItem
+                    if (newText.FindCharacterPos((uint)lastSplitIndex).X - newText.Position.X > bounds.Width)
                     {
-                        NumLines = 1,
-                        Tag = currentTag,
-                        Text = text
-                    });
-                }
-                var currentDisplayString = text.DisplayedString;
-                if (!string.IsNullOrWhiteSpace(currentDisplayString))
-                {
-                    text.DisplayedString = currentText + "\n" + currentDisplayString;
-                }
-                else
-                {
-                    text.DisplayedString = currentText;
-                }
-                var lastSplitIndex = 0;
-                var shadowString = text.DisplayedString;
-                while (text.GetLocalBounds().Width > bounds.Width)
-                {
-                    for (; lastSplitIndex < shadowString.Length; lastSplitIndex++)
-                    {
-                        if (text.FindCharacterPos((uint)lastSplitIndex).X - text.Position.X > bounds.Width)
-                        {
-                            lastSplitIndex--;
-                            shadowString = shadowString.Insert(lastSplitIndex, "\n ");
-                            text.DisplayedString = shadowString;
-                            break;
-                        }
+                        lastSplitIndex--;
+                        shadowString = shadowString.Insert(lastSplitIndex, "\n ");
+                        newText.DisplayedString = shadowString;
+                        break;
                     }
                 }
-                _texts.Last().NumLines = shadowString.Count(a => a == '\n') + 1;
-                AlignTexts();
-                if (text.GetGlobalBounds().Top < bounds.Top)
+            }
+
+            var spacing = _font.GetLineSpacing(_charSize);
+            if (_texts.Any())
+            {
+                var lastText = _texts.Last();
+                newText.Position = new Vector2f(0, lastText.Text.Position.Y + lastText.NumLines * spacing);
+            }
+            else
+                newText.Position = _textOrigin;
+
+            _texts.Add(new WrappedTextItem
+            {
+                NumLines = shadowString.Count(a => a == '\n') + 1,
+                Tag = tag,
+                Text = newText
+            });
+            MoveViewportToBottom();
+        }
+
+        private int scrollAmount = 50;
+        public void ScrollUp()
+        {
+            MoveViewport(new Vector2f(0, -scrollAmount));
+            ClampViewportPos();
+        }
+
+        FloatRect CreateViewRect(Vector2f origin)
+        {
+            var bounds = _getBounds();
+            return new FloatRect(origin, new Vector2f(bounds.Width, bounds.Height));
+        }
+
+        public void ScrollDown()
+        {
+            MoveViewport(new Vector2f(0, scrollAmount));
+            ClampViewportPos();
+        }
+
+        void MoveViewportToBottom()
+        {
+            var bottomOfText = 0;
+            if (_texts.Any())
+            {
+                var lowestText = _texts.Last().Text.GetGlobalBounds();
+                bottomOfText = (int)(lowestText.Top + lowestText.Height);
+            }
+            var bounds = _getBounds();
+            var bottom = new Vector2f(bounds.Left, bottomOfText);
+            MoveViewportTo(bottom - new Vector2f(0, bounds.Height));
+        }
+
+        void MoveViewport(Vector2f delta)
+        {
+            _textViewport.Move(delta);
+            CalculateDrawnText();
+        }
+
+        void MoveViewportTo(Vector2f position)
+        {
+            _textViewport.Reset(CreateViewRect(position));
+            CalculateDrawnText();
+        }
+
+        void CalculateDrawnText()
+        {
+            _textsToDraw = _texts.Where(a => a.Text.GetGlobalBounds().Intersects(GetViewportTargetRegion())).ToList();
+        }
+
+        void ClampViewportPos()
+        {
+            if (!_texts.Any())
+            {
+                MoveViewportToBottom();
+            }
+            else
+            {
+                var firstTextBounds = _texts.First().Text.GetGlobalBounds();
+                var viewportRegion = GetViewportTargetRegion();
+                if (viewportRegion.Top < firstTextBounds.Top)
                 {
-                    _receivedLines.RemoveRange(0, index);
-                    break;
+                    _textViewport.Move(new Vector2f(0, firstTextBounds.Top - viewportRegion.Top));
+                }
+                viewportRegion = GetViewportTargetRegion();
+                var lastTextBounds = _texts.Last().Text.GetGlobalBounds();
+                if (viewportRegion.Bottom().Y > lastTextBounds.Bottom().Y)
+                {
+                    _textViewport.Move(new Vector2f(0, lastTextBounds.Bottom().Y - viewportRegion.Bottom().Y));
                 }
             }
+            CalculateDrawnText();
+        }
+
+        FloatRect GetViewportTargetRegion()
+        {
+            var center = _textViewport.Center;
+            var size = _textViewport.Size;
+            return new FloatRect(new Vector2f(center.X - size.X / 2, center.Y - size.Y / 2), size);
         }
 
         private readonly Dictionary<Tag, Color> _colorLookup;
+        private List<WrappedTextItem> _textsToDraw = new List<WrappedTextItem>();
     }
 }

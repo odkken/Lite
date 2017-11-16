@@ -29,7 +29,7 @@ namespace Lite
         private List<string> _inputHistory = new List<string>();
         private float _currentOpenness;
         private static readonly Color InputTextColor = new Color(155, 255, 255);
-        private static readonly Color ResponseTextColor = new Color(255, 220, 220);
+        private static readonly Color ResponseTextColor = new Color(255, 155, 255);
         private float _lastInputTime;
         private OpenState _state = OpenState.Closed;
         private float _targetOpenness;
@@ -58,7 +58,7 @@ namespace Lite
                 };
 
 
-            reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), font, _characterSize, new Dictionary<Tag, Color>
+            reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), () => (Vector2f)window.Size, font, _characterSize, new Dictionary<Tag, Color>
             {
                 { Tag.Input, InputTextColor},
                 { Tag.Response, ResponseTextColor}
@@ -200,6 +200,13 @@ namespace Lite
             input.MouseButtonDown += args => _inputText.HandleMouseDown(new Vector2f(args.X, args.Y), input.IsShiftDown);
             input.MouseButtonUp += args => _inputText.HandleMouseUp(new Vector2f(args.X, args.Y));
             input.MouseMoved += args => _inputText.HandleMouseMoved(new Vector2f(args.X, args.Y));
+            input.MouseWheelScrolled += args =>
+            {
+                if (args.Delta > 0)
+                    reportText.ScrollUp();
+                else
+                    reportText.ScrollDown();
+            };
 
         }
 

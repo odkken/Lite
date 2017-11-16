@@ -11,6 +11,11 @@ namespace Lite
         static readonly RandomNumberGenerator Rng = new RNGCryptoServiceProvider();
         static readonly byte[] Bytes = new byte[4];
 
+        public static Vector2f Bottom(this FloatRect rect)
+        {
+            return new Vector2f(rect.Left + rect.Width, rect.Top + rect.Height);
+        }
+
         public static Random RNG = new Random();
         //public static float GetRandom()
         //{

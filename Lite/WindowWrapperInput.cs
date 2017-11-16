@@ -11,6 +11,7 @@ namespace Lite
         public event Action<MouseMoveEventArgs> MouseMoved;
         public event Action<MouseButtonEventArgs> MouseButtonDown;
         public event Action<MouseButtonEventArgs> MouseButtonUp;
+        public event Action<MouseWheelEventArgs> MouseWheelScrolled;
 
         public void Consume()
         {
@@ -31,6 +32,7 @@ namespace Lite
             window.MouseButtonPressed += (sender, args) => MouseButtonDown?.Invoke(args);
             window.MouseButtonReleased += (sender, args) => MouseButtonUp?.Invoke(args);
             window.MouseMoved += (sender, args) => MouseMoved?.Invoke(args);
+            window.MouseWheelMoved += (sender, args) => MouseWheelScrolled?.Invoke(args);
         }
     }
 }

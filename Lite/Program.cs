@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using SFML.Graphics;
@@ -10,10 +11,18 @@ namespace Lite
     public static class Program
     {
         private static Terminal terminal;
+        private static List<CommandData> _commands;
+
+        [Command]
+        public static List<string> help()
+        {
+            return _commands.Select(a => a.Name).ToList();
+        }
+
         static void Main(string[] args)
         {
-            var window = new RenderWindow(new VideoMode(1024, 768), "Lite", Styles.Default, new ContextSettings { AntialiasingLevel = 0 });
-            window.SetVerticalSyncEnabled(true);
+            var window = new RenderWindow(new VideoMode(1024, 768), "Lite", Styles.None, new ContextSettings { AntialiasingLevel = 0 });
+            window.SetVerticalSyncEnabled(false);
             window.SetActive();
             window.Closed += (sender, eventArgs) => window.Close();
             window.KeyPressed += (sender, eventArgs) =>
@@ -30,8 +39,8 @@ namespace Lite
 
             var consoleFont = new Font("fonts/consola.ttf");
             var commandExtractor = new CommandExtractor();
-            var commands = commandExtractor.GetAllStaticCommands(Assembly.GetExecutingAssembly());
-            terminal = new Terminal(window, consoleFont, terminalInput, new CommandRunner(commands));
+            _commands = commandExtractor.GetAllStaticCommands(Assembly.GetExecutingAssembly());
+            terminal = new Terminal(window, consoleFont, terminalInput, new CommandRunner(_commands));
             sc(.5f, .5f, .2f, .5f);
             var dtText = new Text("", consoleFont) { Position = new Vector2f(500, 600) };
             var dtBuffer = new Queue<float>();

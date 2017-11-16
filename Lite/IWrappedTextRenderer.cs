@@ -10,5 +10,7 @@ namespace Lite
     public interface IWrappedTextRenderer : Drawable
     {
         void AddLine(string line, Tag tag);
+        void ScrollUp();
+        void ScrollDown();
     }
 }

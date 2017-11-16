@@ -36,9 +36,12 @@ namespace Lite
             AlignTextAndCursor();
         }
 
+        float cursorScale = .75f;
         public void Draw(RenderTarget target, RenderStates states)
         {
+            var bounds = _getBounds();
             _text.Position = new Vector2f(_text.Position.X, _getBounds().Top);
+            _cursor.Position = new Vector2f(_cursor.Position.X, bounds.Top + bounds.Height * (1 - cursorScale) / 2f);
             if (_selectionActive)
                 _selectionRect.Draw(target, states);
             _cursor.FillColor = _getCursorColor();
@@ -49,13 +52,12 @@ namespace Lite
 
         void AlignTextAndCursor()
         {
-            var cursorScale = .75f;
             var bounds = _getBounds();
             var padding = _characterSize * .2f;
             var leftJustification = (int)(bounds.Left + padding);
             var rightJustification = (int)(bounds.Left + bounds.Width - padding);
             var cursorHeight = bounds.Height * cursorScale;
-            _cursor.Position = new Vector2f(_text.FindCharacterPos((uint)_cursorIndex).X + _text.Position.X, bounds.Top + bounds.Height * (1 - cursorScale) / 2f);
+            _cursor.Position = new Vector2f(_text.FindCharacterPos((uint)_cursorIndex).X + _text.Position.X, _cursor.Position.Y);
             if (_cursor.Position.X < leftJustification)
             {
                 var shift = leftJustification - (int)_text.FindCharacterPos((uint)_cursorIndex).X + 1;
@@ -188,6 +190,8 @@ namespace Lite
         {
             get
             {
+                if (!_selectionActive)
+                    return "";
                 var leftMost = Math.Min(_cursorIndex, _selectionOrigin);
                 var rightMost = Math.Max(_cursorIndex, _selectionOrigin);
                 return DisplayString.Substring(leftMost, rightMost - leftMost);

@@ -17,6 +17,8 @@ namespace Lite
         public event Action<MouseButtonEventArgs> MouseButtonDown;
         public event Action<MouseButtonEventArgs> BlockableMouseButtonDown;
         public event Action<MouseButtonEventArgs> MouseButtonUp;
+        public event Action<MouseWheelEventArgs> MouseWheelScrolled;
+        public event Action<MouseWheelEventArgs> BlockableMouseWheelScrolled;
         public event Action<MouseButtonEventArgs> BlockableMouseButtonUp;
         private event Action<KeyEventArgs> BlockableKeyPressed;
         public event Action<KeyEventArgs> KeyPressed;
@@ -30,8 +32,17 @@ namespace Lite
             input.MouseButtonDown += OnMouseDown;
             input.MouseButtonUp += OnMouseUp;
             input.MouseMoved += OnMouseMoved;
+            input.MouseWheelScrolled += OnMouseScrolled;
             _isControlDown = () => input.IsControlDown;
             _isShiftDown = () => input.IsShiftDown;
+        }
+
+        private void OnMouseScrolled(MouseWheelEventArgs args)
+        {
+
+            MouseWheelScrolled?.Invoke(args);
+            if (!_blocked)
+                BlockableMouseWheelScrolled?.Invoke(args);
         }
 
         private void OnMouseMoved(MouseMoveEventArgs args)
@@ -48,6 +59,7 @@ namespace Lite
             blockableInput.BlockableMouseButtonDown += OnMouseDown;
             blockableInput.BlockableMouseButtonUp += OnMouseUp;
             blockableInput.BlockableMouseMoved += OnMouseMoved;
+            blockableInput.BlockableMouseWheelScrolled += OnMouseScrolled;
             _isControlDown = () => blockableInput.BlockedIsControlDown;
             _isShiftDown = () => blockableInput.BlockedIsShiftDown;
         }
