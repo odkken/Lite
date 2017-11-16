@@ -27,6 +27,7 @@ namespace Lite
         public CursorizedText(Text text, Func<FloatRect> getBounds, uint characterSize, Func<Color> getCursorColor)
         {
             _text = text;
+            DisplayString = "";
             _getBounds = getBounds;
             _characterSize = characterSize;
             _getCursorColor = getCursorColor;
@@ -108,12 +109,13 @@ namespace Lite
         public void End(bool shift)
         {
             HandleSelection(shift);
-            _cursorIndex = _text.DisplayedString.Length;
+            _cursorIndex = DisplayString.Length;
             AlignTextAndCursor();
         }
 
         private int _historyIndex = 0;
         private bool _mouseClickedOnUs;
+        private string _displayString;
 
         public void Undo()
         {
@@ -150,7 +152,7 @@ namespace Lite
 
         void MoveCursorToClosestCharacter(Vector2f position)
         {
-            var indeces = Enumerable.Range(0, _text.DisplayedString.Length + 1).ToDictionary(a => a, a => _text.Position + _text.FindCharacterPos((uint)a));
+            var indeces = Enumerable.Range(0, DisplayString.Length + 1).ToDictionary(a => a, a => _text.Position + _text.FindCharacterPos((uint)a));
             var closest = indeces.MinBy(a => (a.Value - position).SquareMagnitude());
             _cursorIndex = closest.Key;
             AlignTextAndCursor();
@@ -182,7 +184,7 @@ namespace Lite
             {
                 var leftMost = Math.Min(_cursorIndex, _selectionOrigin);
                 var rightMost = Math.Max(_cursorIndex, _selectionOrigin);
-                return _text.DisplayedString.Substring(leftMost, rightMost - leftMost);
+                return DisplayString.Substring(leftMost, rightMost - leftMost);
             }
         }
 
@@ -194,8 +196,8 @@ namespace Lite
             }
             else
             {
-                if (_cursorIndex == _text.DisplayedString.Length) return;
-                _text.DisplayedString = _text.DisplayedString.Remove(_cursorIndex, 1);
+                if (_cursorIndex == DisplayString.Length) return;
+                DisplayString = DisplayString.Remove(_cursorIndex, 1);
             }
             ClampCursor();
         }
@@ -203,15 +205,15 @@ namespace Lite
         public void SetString(string s)
         {
             _selectionActive = false;
-            _text.DisplayedString = s;
-            _cursorIndex = _text.DisplayedString.Length;
+            DisplayString = s;
+            _cursorIndex = DisplayString.Length;
             AlignTextAndCursor();
         }
 
         public void SelectAll()
         {
             _selectionActive = true;
-            _selectionOrigin = _text.DisplayedString.Length;
+            _selectionOrigin = DisplayString.Length;
             _cursorIndex = 0;
             AlignTextAndCursor();
         }
@@ -225,7 +227,7 @@ namespace Lite
             else
             {
                 if (_cursorIndex == 0) return;
-                _text.DisplayedString = _text.DisplayedString.Remove(_cursorIndex - 1, 1);
+                DisplayString = DisplayString.Remove(_cursorIndex - 1, 1);
                 _cursorIndex--;
             }
             ClampCursor();
@@ -235,32 +237,32 @@ namespace Lite
         {
             if (_selectionActive)
                 DeleteSelected();
-            _text.DisplayedString = _text.DisplayedString.Insert(_cursorIndex, text);
-            _text.DisplayedString = _text.DisplayedString.Substring(0, Math.Min(2500, _text.DisplayedString.Length));
+            DisplayString = DisplayString.Insert(_cursorIndex, text);
+            DisplayString = DisplayString.Substring(0, Math.Min(2500, DisplayString.Length));
             _cursorIndex += text.Length;
             ClampCursor();
         }
 
         public override string ToString()
         {
-            return _text.DisplayedString;
+            return DisplayString;
         }
 
         private int FindFollowingWordEnd()
         {
-            if (_cursorIndex == _text.DisplayedString.Length)
+            if (_cursorIndex == DisplayString.Length)
                 return _cursorIndex;
-            var isOnWhitespace = char.IsWhiteSpace(_text.DisplayedString[_cursorIndex]);
-            var foundIndex = _text.DisplayedString.Substring(_cursorIndex).ToList()
+            var isOnWhitespace = char.IsWhiteSpace(DisplayString[_cursorIndex]);
+            var foundIndex = DisplayString.Substring(_cursorIndex).ToList()
                 .FindIndex(a => char.IsWhiteSpace(a) != isOnWhitespace);
             if (foundIndex == -1)
-                return _text.DisplayedString.Length;
+                return DisplayString.Length;
             return _cursorIndex + foundIndex;
         }
 
         private void ClampCursor()
         {
-            _cursorIndex = Math.Clamp(_cursorIndex, 0, _text.DisplayedString.Length);
+            _cursorIndex = Math.Clamp(_cursorIndex, 0, DisplayString.Length);
             AlignTextAndCursor();
         }
 
@@ -268,8 +270,8 @@ namespace Lite
         {
             if (_cursorIndex == 0)
                 return _cursorIndex;
-            var isOnWhitespace = char.IsWhiteSpace(_text.DisplayedString[_cursorIndex - 1]);
-            return _text.DisplayedString.Substring(0, _cursorIndex).ToList()
+            var isOnWhitespace = char.IsWhiteSpace(DisplayString[_cursorIndex - 1]);
+            return DisplayString.Substring(0, _cursorIndex).ToList()
                 .FindLastIndex(a => char.IsWhiteSpace(a) != isOnWhitespace) + 1;
         }
 
@@ -291,10 +293,20 @@ namespace Lite
         {
             var leftmost = Math.Min(_cursorIndex, _selectionOrigin);
             var range = Math.Abs(_cursorIndex - _selectionOrigin);
-            _text.DisplayedString = _text.DisplayedString.Remove(leftmost, Math.Min(range, _text.DisplayedString.Length - leftmost));
+            DisplayString = DisplayString.Remove(leftmost, Math.Min(range, DisplayString.Length - leftmost));
             _cursorIndex = leftmost;
             _selectionActive = false;
             AlignTextAndCursor();
+        }
+
+        private string DisplayString
+        {
+            get => _displayString;
+            set
+            {
+                _displayString = value;
+                _text.DisplayedString = value.Replace("\n", "");
+            }
         }
     }
 }

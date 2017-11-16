@@ -82,7 +82,6 @@ namespace Lite
                 if (!string.IsNullOrWhiteSpace(currentDisplayString))
                 {
                     text.DisplayedString = currentText + "\n" + currentDisplayString;
-                    _texts.Last().NumLines++;
                 }
                 else
                 {
@@ -99,11 +98,11 @@ namespace Lite
                             lastSplitIndex--;
                             shadowString = shadowString.Insert(lastSplitIndex, "\n ");
                             text.DisplayedString = shadowString;
-                            _texts.Last().NumLines++;
                             break;
                         }
                     }
                 }
+                _texts.Last().NumLines = shadowString.Count(a => a == '\n') + 1;
                 AlignTexts();
                 if (text.GetGlobalBounds().Top < bounds.Top)
                 {
