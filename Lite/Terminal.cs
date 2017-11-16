@@ -31,12 +31,10 @@ namespace Lite
         private static readonly Color InputTextColor = new Color(155, 255, 255);
         private static readonly Color ResponseTextColor = new Color(255, 220, 220);
         private float _lastInputTime;
-        private float _maxOpenness = .7f;
         private OpenState _state = OpenState.Closed;
         private float _targetOpenness;
 
         public float xOffset = _characterSize * .2f;
-        private float _lastHistoryRecalledTime;
         private readonly ICursorizedText _inputText;
 
         public void SetHighlightColor(Color color)
@@ -60,14 +58,6 @@ namespace Lite
                 };
 
 
-            var actualInputText = new Text
-            {
-                Font = font,
-                CharacterSize = _characterSize,
-                Color = InputTextColor,
-                DisplayedString = "Hi Buddy Waz Sup.<><>"
-            };
-
             reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), font, _characterSize, new Dictionary<Tag, Color>
             {
                 { Tag.Input, InputTextColor},
@@ -75,7 +65,7 @@ namespace Lite
             });
             _inputHistory = new List<string>();
 
-            _inputText = new CursorizedText(new Text("", font, _characterSize){Color = InputTextColor},
+            _inputText = new CursorizedText(new Text("", font, _characterSize) { Color = InputTextColor },
                 _inputBackground.GetGlobalBounds, _characterSize,
                 () =>
                 {

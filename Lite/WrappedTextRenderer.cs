@@ -112,6 +112,6 @@ namespace Lite
             }
         }
 
-        private Dictionary<Tag, Color> _colorLookup;
+        private readonly Dictionary<Tag, Color> _colorLookup;
     }
 }

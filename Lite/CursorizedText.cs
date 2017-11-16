@@ -81,9 +81,12 @@ namespace Lite
 
         public void AdvanceCursor(bool control, bool shift)
         {
+            var wasSelected = _selectionActive;
             HandleSelection(shift);
             if (control)
                 _cursorIndex = FindFollowingWordEnd();
+            else if (wasSelected && !_selectionActive)
+                _cursorIndex = Math.Max(_cursorIndex, _selectionOrigin);
             else
                 _cursorIndex++;
             ClampCursor();
@@ -91,9 +94,12 @@ namespace Lite
 
         public void RecedeCursor(bool control, bool shift)
         {
+            var wasSelected = _selectionActive;
             HandleSelection(shift);
             if (control)
                 _cursorIndex = FindPrecedingWordEnd();
+            else if (wasSelected && !_selectionActive)
+                _cursorIndex = Math.Min(_cursorIndex, _selectionOrigin);
             else
                 _cursorIndex--;
             ClampCursor();
