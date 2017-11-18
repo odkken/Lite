@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using MoreLinq;
 using SFML.Graphics;
 using SFML.System;
@@ -16,7 +17,7 @@ namespace Lite
 
     public class Terminal : Drawable
     {
-        private static readonly uint _characterSize = 16;
+        private static readonly uint CharacterSize = 16;
         private readonly float _closedYPos;
         private readonly RectangleShape _inputBackground;
 
@@ -33,8 +34,9 @@ namespace Lite
         private float _lastInputTime;
         private OpenState _state = OpenState.Closed;
         private float _targetOpenness;
+        private IAutoCompleter _completer;
 
-        public float xOffset = _characterSize * .2f;
+        public float XOffset = CharacterSize * .2f;
         private readonly ICursorizedText _inputText;
 
         public void SetHighlightColor(Color color)
@@ -42,8 +44,8 @@ namespace Lite
             _inputText.SetHighlightColor(color);
         }
 
-        private IWrappedTextRenderer reportText;
-        public Terminal(RenderWindow window, Font font, IInput input, ICommandRunner commandRunner)
+        private readonly IWrappedTextRenderer _reportText;
+        public Terminal(RenderWindow window, Font font, IInput input, Func<ICommandRunner> getCommandRunner, Func<string, List<string>> getSuggestions)
         {
             _closedYPos = window.Size.Y / 2f;
             _reportBackground = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y / 2f))
@@ -52,27 +54,31 @@ namespace Lite
 
             };
             _inputBackground =
-                new RectangleShape(new Vector2f(window.Size.X, font.GetLineSpacing(_characterSize) * 1.1f))
+                new RectangleShape(new Vector2f(window.Size.X, font.GetLineSpacing(CharacterSize) * 1.1f))
                 {
                     FillColor = _inputBackgroundColor
                 };
 
-
-            reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), () => (Vector2f)window.Size, font, _characterSize, new Dictionary<Tag, Color>
+            _reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), () => (Vector2f)window.Size, font, CharacterSize, new Dictionary<Tag, Color>
             {
                 { Tag.Input, InputTextColor},
-                { Tag.Response, ResponseTextColor}
+                { Tag.Response, ResponseTextColor},
+                { Tag.Error, new Color(255, 100, 100)},
+                { Tag.Warning, new Color(255,155,55)},
+                { Tag.Debug, Color.Yellow}
             });
             _inputHistory = new List<string>();
 
-            _inputText = new CursorizedText(new Text("", font, _characterSize) { Color = InputTextColor },
-                _inputBackground.GetGlobalBounds, _characterSize,
+            _inputText = new CursorizedText(new Text("", font, CharacterSize) { Color = InputTextColor },
+                _inputBackground.GetGlobalBounds, CharacterSize,
                 () =>
                 {
                     var fraction = MathF.Sin(3 * (Core.TimeInfo.CurrentTime - _lastInputTime));
                     fraction *= fraction;
                     return Color.White.Lerp(new Color(255, 255, 255, 0), fraction);
                 });
+
+            _completer = new AutoCompleter(getSuggestions, () => _inputBackground.Position + new Vector2f(0, CharacterSize * 1.5f), font, CharacterSize);
 
             var inputHistoryIndex = 0;
             var toggled = false;
@@ -108,18 +114,33 @@ namespace Lite
                                 break;
                             case "\r":
                                 {
-                                    var inputString = _inputText.ToString();
-                                    if (string.IsNullOrWhiteSpace(inputString))
-                                        break;
-                                    _inputText.SetString("");
-                                    _inputHistory.Add(inputString);
-                                    inputHistoryIndex = _inputHistory.Count;
-                                    reportText.AddLine(inputString, Tag.Input);
-                                    commandRunner.RunCommand(inputString).ForEach(a => reportText.AddLine(a, Tag.Response));
+                                    if (_completer.IsActive)
+                                    {
+                                        _inputText.SetString(_completer.ChooseSelectedItem());
+                                        _completer.Escape();
+                                    }
+                                    else
+                                    {
+                                        var inputString = _inputText.ToString();
+                                        if (string.IsNullOrWhiteSpace(inputString))
+                                            break;
+                                        _inputText.SetString("");
+                                        _inputHistory.Add(inputString);
+                                        inputHistoryIndex = _inputHistory.Count;
+                                        _reportText.AddLine(inputString, Tag.Input);
+                                        getCommandRunner().RunCommand(inputString)
+                                            .ForEach(a => _reportText.AddLine(a, Tag.Response));
+                                    }
                                 }
                                 break;
+                            case @"\u001b":
+                                break;
                             default:
-                                _inputText.AddString(args.Unicode);
+                                var text = Regex.Replace(args.Unicode, @"[^\u0020-\u007E]", string.Empty);
+                                if (string.IsNullOrEmpty(text))
+                                    break;
+                                _inputText.AddString(text);
+                                _completer.UpdateInputString(_inputText.ToString());
                                 break;
                         }
                     else toggled = false;
@@ -135,7 +156,9 @@ namespace Lite
                 switch (args.Code)
                 {
                     case Keyboard.Key.Up:
-                        if (_inputHistory.Any())
+                        if (_completer.IsActive)
+                            _completer.IncrementSelection();
+                        else if (_inputHistory.Any())
                         {
                             inputHistoryIndex--;
                             if (inputHistoryIndex < 0)
@@ -144,7 +167,9 @@ namespace Lite
                         }
                         break;
                     case Keyboard.Key.Down:
-                        if (_inputHistory.Any())
+                        if (_completer.IsActive)
+                            _completer.DecrementSelection();
+                        else if (_inputHistory.Any())
                         {
                             inputHistoryIndex++;
                             if (inputHistoryIndex >= _inputHistory.Count)
@@ -183,7 +208,7 @@ namespace Lite
                             var selected = _inputText.SelectedText;
                             if (string.IsNullOrWhiteSpace(selected))
                                 break;
-                                Clippy.PushStringToClipboard(selected);
+                            Clippy.PushStringToClipboard(selected);
                         }
                         break;
                     case Keyboard.Key.X:
@@ -200,7 +225,26 @@ namespace Lite
                         if (args.Control)
                             _inputText.AddString(Clippy.GetText());
                         break;
+                    case Keyboard.Key.Escape:
+                        if (_completer.IsActive)
+                            _completer.Escape();
+                        else
+                        {
+                            _state = OpenState.Closed;
+                            input.Release();
+                            toggled = true;
+                        }
+                        break;
+                    case Keyboard.Key.Tab:
+                        if (_completer.IsActive)
+                        {
+                            _inputText.SetString(_completer.ChooseSelectedItem());
+                            _completer.Escape();
+                        }
+                        break;
                 }
+                if (toggled)
+                    UpdateOpenness();
             };
 
             input.MouseButtonDown += args => _inputText.HandleMouseDown(new Vector2f(args.X, args.Y), input.IsShiftDown);
@@ -209,9 +253,9 @@ namespace Lite
             input.MouseWheelScrolled += args =>
             {
                 if (args.Delta > 0)
-                    reportText.ScrollUp();
+                    _reportText.ScrollUp();
                 else
-                    reportText.ScrollDown();
+                    _reportText.ScrollDown();
             };
 
         }
@@ -229,9 +273,10 @@ namespace Lite
                 _inputBackground.Position = new Vector2f(0, (int)(bounds.Top + bounds.Height));
                 _reportBackground.Draw(target, states);
 
-                reportText.Draw(target, states);
+                _reportText.Draw(target, states);
                 _inputBackground.Draw(target, states);
                 _inputText.Draw(target, states);
+                _completer.Draw(target, states);
             }
         }
 
@@ -253,6 +298,26 @@ namespace Lite
                 if (_currentOpenness < _targetOpenness)
                     _currentOpenness = _targetOpenness;
             }
+        }
+
+        public void LogMessage(string arg1, Category arg2)
+        {
+            Tag tag;
+            switch (arg2)
+            {
+                case Category.Debug:
+                    tag = Tag.Debug;
+                    break;
+                case Category.Warning:
+                    tag = Tag.Warning;
+                    break;
+                case Category.Error:
+                    tag = Tag.Error;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(arg2), arg2, null);
+            }
+            _reportText.AddLine(arg1, tag);
         }
     }
 }

@@ -9,18 +9,31 @@ namespace Lite
 
     public class WrappedTextRenderer : IWrappedTextRenderer
     {
-        private readonly Func<FloatRect> _getBounds;
+        private readonly Func<FloatRect> _getBoundsForText;
         private readonly Func<Vector2f> _getWindowDimensions;
         private readonly Font _font;
         private readonly uint _charSize;
+        private RectangleShape scrollBar;
+        private RectangleShape scrollChannel;
 
         public WrappedTextRenderer(Func<FloatRect> getBounds, Func<Vector2f> getWindowDimensions, Font font, uint charSize, Dictionary<Tag, Color> colorLookup)
         {
-            _getBounds = getBounds;
+            var bounds = getBounds();
+            _getFullBounds = getBounds;
+            scrollChannel = new RectangleShape(new Vector2f(30, bounds.Height))
+            {
+                FillColor = new Color(150, 150, 150, 100)
+            };
+            _getBoundsForText = () =>
+            {
+                var allBounds = getBounds();
+                return new FloatRect(allBounds.Left + 2, allBounds.Top, allBounds.Width - scrollChannel.Size.X - 4, allBounds.Height);
+            };
             _getWindowDimensions = getWindowDimensions;
             _font = font;
             _charSize = charSize;
             _colorLookup = colorLookup;
+            _textOrigin = new Vector2f(200000, 200000);
             _textViewport = new View(new FloatRect(_textOrigin, new Vector2f(getBounds().Width, getBounds().Height)));
         }
 
@@ -28,9 +41,12 @@ namespace Lite
 
         public void Draw(RenderTarget target, RenderStates states)
         {
-            var bounds = _getBounds();
+            var boundsForText = _getBoundsForText();
+            var fullBounds = _getFullBounds();
+            scrollChannel.Position = new Vector2f(fullBounds.Right() - scrollChannel.Size.X, fullBounds.Top);
+            scrollChannel.Draw(target, states);
             var windowSize = _getWindowDimensions();
-            _textViewport.Viewport = new FloatRect(bounds.Left / windowSize.X, bounds.Top / windowSize.Y, bounds.Width / windowSize.X, bounds.Height / windowSize.Y);
+            _textViewport.Viewport = Core.WindowUtil.GetFractionalRect(boundsForText);
             target.SetView(_textViewport);
             _textsToDraw.ForEach(a => a.Text.Draw(target, states));
             target.SetView(target.DefaultView);
@@ -43,7 +59,7 @@ namespace Lite
             public int NumLines { get; set; }
         }
 
-        readonly Vector2f _textOrigin = new Vector2f(200000, 200000);
+        private readonly Vector2f _textOrigin;
         private readonly List<Tuple<string, Tag>> _receivedLines = new List<Tuple<string, Tag>>();
         private readonly List<WrappedTextItem> _texts = new List<WrappedTextItem>();
 
@@ -51,11 +67,11 @@ namespace Lite
         {
             _receivedLines.Add(Tuple.Create(line, tag));
 
-            var shadowString = line;
+            var shadowString = line ?? "";
             var newText = new Text(shadowString, _font, _charSize) { Color = _colorLookup[tag] };
             var lastSplitIndex = 0;
 
-            var bounds = _getBounds();
+            var bounds = _getBoundsForText();
             while (newText.GetLocalBounds().Width > bounds.Width)
             {
                 for (; lastSplitIndex < shadowString.Length; lastSplitIndex++)
@@ -74,7 +90,7 @@ namespace Lite
             if (_texts.Any())
             {
                 var lastText = _texts.Last();
-                newText.Position = new Vector2f(0, lastText.Text.Position.Y + lastText.NumLines * spacing);
+                newText.Position = lastText.Text.Position + new Vector2f(0, lastText.NumLines * spacing);
             }
             else
                 newText.Position = _textOrigin;
@@ -97,7 +113,7 @@ namespace Lite
 
         FloatRect CreateViewRect(Vector2f origin)
         {
-            var bounds = _getBounds();
+            var bounds = _getBoundsForText();
             return new FloatRect(origin, new Vector2f(bounds.Width, bounds.Height));
         }
 
@@ -115,8 +131,8 @@ namespace Lite
                 var lowestText = _texts.Last().Text.GetGlobalBounds();
                 bottomOfText = (int)(lowestText.Top + lowestText.Height);
             }
-            var bounds = _getBounds();
-            var bottom = new Vector2f(bounds.Left, bottomOfText);
+            var bounds = _getBoundsForText();
+            var bottom = new Vector2f(_textOrigin.X, bottomOfText);
             MoveViewportTo(bottom - new Vector2f(0, bounds.Height));
         }
 
@@ -134,7 +150,8 @@ namespace Lite
 
         void CalculateDrawnText()
         {
-            _textsToDraw = _texts.Where(a => a.Text.GetGlobalBounds().Intersects(GetViewportTargetRegion())).ToList();
+            var vtr = _textViewport.GetTargetRegion();
+            _textsToDraw = _texts.Where(a => a.Text.GetGlobalBounds().Intersects(vtr)).ToList();
         }
 
         void ClampViewportPos()
@@ -146,29 +163,24 @@ namespace Lite
             else
             {
                 var firstTextBounds = _texts.First().Text.GetGlobalBounds();
-                var viewportRegion = GetViewportTargetRegion();
+                var viewportRegion = _textViewport.GetTargetRegion();
                 if (viewportRegion.Top < firstTextBounds.Top)
                 {
                     _textViewport.Move(new Vector2f(0, firstTextBounds.Top - viewportRegion.Top));
                 }
-                viewportRegion = GetViewportTargetRegion();
+                viewportRegion = _textViewport.GetTargetRegion();
                 var lastTextBounds = _texts.Last().Text.GetGlobalBounds();
-                if (viewportRegion.Bottom().Y > lastTextBounds.Bottom().Y)
+                if (viewportRegion.Bottom() > lastTextBounds.Bottom())
                 {
-                    _textViewport.Move(new Vector2f(0, lastTextBounds.Bottom().Y - viewportRegion.Bottom().Y));
+                    _textViewport.Move(new Vector2f(0, lastTextBounds.Bottom() - viewportRegion.Bottom()));
                 }
             }
             CalculateDrawnText();
         }
 
-        FloatRect GetViewportTargetRegion()
-        {
-            var center = _textViewport.Center;
-            var size = _textViewport.Size;
-            return new FloatRect(new Vector2f(center.X - size.X / 2, center.Y - size.Y / 2), size);
-        }
 
         private readonly Dictionary<Tag, Color> _colorLookup;
         private List<WrappedTextItem> _textsToDraw = new List<WrappedTextItem>();
+        private Func<FloatRect> _getFullBounds;
     }
 }

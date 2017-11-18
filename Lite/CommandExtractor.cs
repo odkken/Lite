@@ -7,6 +7,13 @@ namespace Lite
 {
     public class CommandExtractor
     {
+        private readonly ILogger _logger;
+
+        public CommandExtractor(ILogger logger)
+        {
+            _logger = logger;
+        }
+
         public List<CommandData> GetAllStaticCommands(Assembly ass)
         {
             var commands = new List<CommandData>();
@@ -17,7 +24,7 @@ namespace Lite
                 {
                     if (!method.IsStatic)
                     {
-                        Console.WriteLine($"Can't register command {method.Name} because it isn't static.");
+                        _logger.Log($"Can't register command {method.Name} because it isn't static.", Category.Error);
                         continue;
                     }
                     commands.Add(new CommandData
@@ -27,10 +34,10 @@ namespace Lite
                         {
                             var parms = method.GetParameters();
                             if (parms.Length != strings.Length)
-                                return new List<string>
-                                {
-                                    $"{method.Name} argument mismatch.  Expected <{string.Join(",", parms.Select(a=> a.ParameterType))}>"
-                                };
+                            {
+                                _logger.Log($"{method.Name} argument mismatch.  Expected <{string.Join(",", parms.Select(a => a.ParameterType))}>", Category.Error);
+                                return new List<string>();
+                            }
                             var typedArgs = new List<object>();
                             var parameterErrors = new List<string>();
                             for (int i = 0; i < parms.Length; i++)
@@ -46,7 +53,10 @@ namespace Lite
                                 }
                             }
                             if (parameterErrors.Any())
-                                return parameterErrors;
+                            {
+                                parameterErrors.ForEach(a => _logger.Log(a, Category.Error));
+                                return new List<string>();
+                            }
 
                             var returnVal = method.Invoke(null, typedArgs.ToArray());
 
@@ -57,6 +67,7 @@ namespace Lite
                     });
                 }
             }
+            _logger.Log($"Extracted comands: {string.Join(",", commands.Select(a => a.Name))}");
             return commands;
         }
     }

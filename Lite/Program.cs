@@ -21,26 +21,32 @@ namespace Lite
 
         static void Main(string[] args)
         {
-            var window = new RenderWindow(new VideoMode(1920,1080), "Lite", Styles.None, new ContextSettings { AntialiasingLevel = 0 });
+            var window = new RenderWindow(new VideoMode(1920, 1080), "Lite", Styles.None, new ContextSettings { AntialiasingLevel = 0 });
             window.SetVerticalSyncEnabled(false);
             window.SetActive();
             window.Closed += (sender, eventArgs) => window.Close();
-            window.KeyPressed += (sender, eventArgs) =>
-            {
-                if (eventArgs.Code == Keyboard.Key.Escape)
-                    window.Close();
-            };
+
             var timeInfo = new TimeInfo();
 
             var globalInput = new WindowWrapperInput(window);
             var terminalInput = new BlockableInput(globalInput);
             var gameInput = new BlockableInput(terminalInput);
-            Core.Initialize(timeInfo, gameInput);
+            gameInput.KeyPressed += eventArgs =>
+             {
+                 if (eventArgs.Code == Keyboard.Key.Escape)
+                     window.Close();
+             };
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size));
 
             var consoleFont = new Font("fonts/consola.ttf");
-            var commandExtractor = new CommandExtractor();
+            CommandRunner runner = null;
+            terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => _commands.Where(a => a.Name.ToLower().Contains(s)).Select(a=> a.Name).ToList());
+            var logger = new LambdaLogger(terminal.LogMessage);
+
+            var commandExtractor = new CommandExtractor(logger);
             _commands = commandExtractor.GetAllStaticCommands(Assembly.GetExecutingAssembly());
-            terminal = new Terminal(window, consoleFont, terminalInput, new CommandRunner(_commands));
+            runner = new CommandRunner(_commands);
+
             sc(.5f, .5f, .2f, .5f);
             var dtText = new Text("", consoleFont) { Position = new Vector2f(500, 600) };
             var dtBuffer = new Queue<float>();

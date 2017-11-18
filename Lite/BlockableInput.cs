@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using SFML.Window;
 
 namespace Lite
@@ -11,6 +12,8 @@ namespace Lite
         public bool IsControlDown => _isControlDown();
 
         private readonly Func<bool> _isShiftDown;
+        private bool _conditionallyBlocked;
+        private Keyboard.Key[] _blockedKeys;
         public bool IsShiftDown => _isShiftDown();
         public event Action<MouseMoveEventArgs> MouseMoved;
         public event Action<MouseMoveEventArgs> BlockableMouseMoved;
@@ -82,7 +85,8 @@ namespace Lite
             var initialBlocked = _blocked;
             KeyPressed?.Invoke(args);
 
-            if (!_blocked && initialBlocked == _blocked)
+            var thisKeyAllowed = !_blocked || _blockedKeys != null && !_blockedKeys.Contains(args.Code);
+            if (thisKeyAllowed && initialBlocked == _blocked)
                 BlockableKeyPressed?.Invoke(args);
         }
 
@@ -103,6 +107,12 @@ namespace Lite
         public void Consume()
         {
             _blocked = true;
+            _blockedKeys = null;
+        }
+
+        public void Consume(params Keyboard.Key[] keys)
+        {
+            _blockedKeys = keys;
         }
 
         public void Release()

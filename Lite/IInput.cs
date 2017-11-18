@@ -13,6 +13,7 @@ namespace Lite
         event Action<MouseButtonEventArgs> MouseButtonUp;
         event Action<MouseWheelEventArgs> MouseWheelScrolled;
         void Consume();
+        void Consume(params Keyboard.Key[] keys);
         void Release();
         event Action<KeyEventArgs> KeyPressed;
     }

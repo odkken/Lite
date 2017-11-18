@@ -5,7 +5,10 @@ namespace Lite
     public enum Tag
     {
         Input,
-        Response
+        Response,
+        Error,
+        Warning,
+        Debug
     }
     public interface IWrappedTextRenderer : Drawable
     {

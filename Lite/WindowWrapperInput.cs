@@ -18,6 +18,11 @@ namespace Lite
 
         }
 
+        public void Consume(params Keyboard.Key[] keys)
+        {
+            
+        }
+
         public void Release()
         {
 
