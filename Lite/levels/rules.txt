@@ -1,1 +1,11 @@
-rules
+walking into a block:
+	push if no block/wall present beyond
+		if block/wall present beyond, pick up
+
+while holding block
+	if walking into block
+		place block on top
+	if walking into cliff
+		place block in hole
+	if walking into wall
+		place block behind you (bounces off wall)

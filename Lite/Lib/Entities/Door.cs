@@ -1,18 +1,12 @@
 ﻿using System;
+using Lite.Lib.GameCore;
 using SFML.Graphics;
 
 namespace Lite.Lib.Entities
 {
-    internal class Door : Entity
+    internal class Door : Empty
     {
-        public override void Draw(RenderTarget target, RenderStates states)
-        {
-            //throw new NotImplementedException();
-        }
-
-        public override void Update()
-        {
-            //throw new NotImplementedException();
-        }
+        protected override Color Color => Color.Yellow;
+        public override TileType TileType => TileType.Door;
     }
 }

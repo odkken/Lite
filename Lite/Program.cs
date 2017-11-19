@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -15,12 +16,39 @@ namespace Lite
     {
         private static Terminal terminal;
         private static List<CommandData> _commands;
+        private static World _world;
+
+        [Command]
+        public static void Load(int level)
+        {
+            _world.Load(level);
+        }
+
+
+        [Command]
+        public static List<string> PrintEntities()
+        {
+            return _world.Entities;
+        }
+        [Command]
+        public static void ToggleCoords()
+        {
+            _world.DrawCoordText = !_world.DrawCoordText;
+        }
 
         [Command]
         public static List<string> help()
         {
             return _commands.Select(a => a.Name).ToList();
         }
+
+        [Command]
+        public static void SetLogLevel(string category)
+        {
+            logCategory = Enum.Parse<Category>(category, true);
+        }
+
+        private static Category logCategory = Category.Debug;
 
         static void Main(string[] args)
         {
@@ -40,14 +68,17 @@ namespace Lite
                      window.Close();
              };
             ILogger logger = null;
-            var world = new World();
-            Entity.SetRegistrationAction(world.RegisterEntity);
-            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), world, () => logger);
-
+            _world = new World(i => File.ReadAllLines($"levels/{i}.txt").ToList());
+            Entity.SetActions(_world.RegisterEntity, _world.SetPosition);
             var consoleFont = new Font("fonts/consola.ttf");
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), _world, () => logger, new TextInfo() { DefaultFont = consoleFont });
+
             CommandRunner runner = null;
-            terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a=> a.Length).ToList());
-            logger = new LambdaLogger(terminal.LogMessage);
+            terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());
+            logger = new LambdaLogger((a, b) =>
+            {
+                if (b >= logCategory) terminal.LogMessage(a, b);
+            });
 
             var commandExtractor = new CommandExtractor(logger);
             _commands = commandExtractor.GetAllStaticCommands(Assembly.GetExecutingAssembly());
@@ -57,7 +88,7 @@ namespace Lite
             var dtText = new Text("", consoleFont) { Position = new Vector2f(500, 600) };
             var dtBuffer = new Queue<float>();
 
-            world.Load(File.ReadAllLines("levels/1.txt").ToList());
+            _world.Load(1);
             while (window.IsOpen)
             {
                 timeInfo.Tick();
@@ -70,8 +101,12 @@ namespace Lite
                 dtText.DisplayedString = dtBuffer.Average().ToString();
                 window.DispatchEvents();
                 window.Clear(Color.Black);
-                world.Update();
-                window.Draw(world);
+                if (Core.TimeInfo.CurrentFrame == gcFrame + 1)
+                {
+                    logger.Log("GC frame time: " + Core.TimeInfo.CurrentDt, Category.SuperLowDebug);
+                }
+                _world.Update();
+                window.Draw(_world);
                 window.Draw(dtText);
                 window.Draw(terminal);
                 window.Display();
@@ -103,6 +138,17 @@ namespace Lite
         public static void sc(float r, float g, float b, float a)
         {
             terminal.SetHighlightColor(new Color((byte)(255 * r), (byte)(255 * g), (byte)(255 * b), (byte)(255 * a)));
+        }
+
+        private static int gcFrame = 0;
+        public static void LogGcFrame()
+        {
+            var frame = Core.TimeInfo.CurrentFrame;
+            if (frame != gcFrame)
+            {
+                gcFrame = frame;
+                Core.Logger.Log($"gc on frame {Core.TimeInfo.CurrentFrame}.  This frame time = {Core.TimeInfo.CurrentDt}", Category.SuperLowDebug);
+            }
         }
     }
 }

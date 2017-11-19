@@ -65,7 +65,8 @@ namespace Lite.Lib.Terminal
                 { Tag.Response, ResponseTextColor},
                 { Tag.Error, new Color(255, 100, 100)},
                 { Tag.Warning, new Color(255,155,55)},
-                { Tag.Debug, Color.Yellow}
+                { Tag.Debug, Color.Yellow},
+                { Tag.SuperLowDebug, Color.Green}
             });
             _inputHistory = new List<string>();
 
@@ -317,6 +318,9 @@ namespace Lite.Lib.Terminal
                     break;
                 case Category.Error:
                     tag = Tag.Error;
+                    break;
+                case Category.SuperLowDebug:
+                    tag = Tag.SuperLowDebug;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(arg2), arg2, null);

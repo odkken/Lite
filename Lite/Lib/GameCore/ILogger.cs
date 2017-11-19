@@ -2,6 +2,7 @@
 {
     public enum Category
     {
+        SuperLowDebug,
         Debug,
         Warning,
         Error

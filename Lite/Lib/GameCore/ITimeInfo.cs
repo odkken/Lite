@@ -4,5 +4,6 @@ namespace Lite.Lib.GameCore
     {
         float CurrentDt { get; }
         float CurrentTime { get; }
+        int CurrentFrame { get; }
     }
 }

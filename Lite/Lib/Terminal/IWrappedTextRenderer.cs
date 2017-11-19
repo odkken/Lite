@@ -8,7 +8,8 @@ namespace Lite.Lib.Terminal
         Response,
         Error,
         Warning,
-        Debug
+        Debug,
+        SuperLowDebug
     }
     public interface IWrappedTextRenderer : Drawable
     {

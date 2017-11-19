@@ -1,4 +1,7 @@
-x       x
-x cb  d x
-xxxx xxxx
-   xxx
+x         x
+x         x
+x         x
+x         x
+x cb    d x
+xxxxx xxxxx
+    xxx

@@ -1,19 +1,39 @@
 ﻿using System;
 using SFML.Graphics;
 using Lite.Lib.GameCore;
+using SFML.System;
 
 namespace Lite.Lib.Entities
 {
     internal class Box : Entity
     {
-        public override void Draw(RenderTarget target, RenderStates states)
+        private RectangleShape shape = new RectangleShape { FillColor = Color.Green };
+        protected override void DestroyMe()
         {
-            throw new NotImplementedException();
+
         }
 
-        public override void Update()
+        protected override void DrawMe(RenderTarget target, RenderStates states)
         {
-            throw new NotImplementedException();
+            shape.Draw(target, states);
+        }
+
+        public override Vector2i Position
+        {
+            get => base.Position;
+            set
+            {
+                base.Position = value;
+                UpdateMe();
+            }
+        }
+
+        protected override void UpdateMe()
+        {
+            if (GameWorld.GetTileAt(Position + new Vector2i(0, 1)) is Empty)
+                Position += new Vector2i(0, 1);
+            shape.Size = new Vector2f(Tile.TileSize, Tile.TileSize);
+            shape.Position = (Vector2f)(Position * Tile.TileSize);
         }
     }
 }

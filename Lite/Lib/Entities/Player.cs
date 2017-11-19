@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.Design.Serialization;
 using System.Data;
 using Lite.Lib.GameCore;
 using SFML.Graphics;
@@ -11,64 +12,109 @@ namespace Lite.Lib.Entities
     {
         public Player()
         {
-            Core.Input.KeyPressed += args =>
-            {
-                switch (args.Code)
-                {
-                    case Keyboard.Key.W:
-                    case Keyboard.Key.Up:
-                        Move(new Vector2i(0, -1));
-                        break;
-                    case Keyboard.Key.A:
-                    case Keyboard.Key.Left:
-                        Move(new Vector2i(-1, 0));
-                        break;
-                    case Keyboard.Key.D:
-                    case Keyboard.Key.Right:
-                        Move(new Vector2i(1, 0));
-                        break;
-                    case Keyboard.Key.S:
-                    case Keyboard.Key.Down:
-                        Move(new Vector2i(0, 1));
-                        break;
-                }
-            };
-            shape = new CircleShape(){FillColor = Color.White};
+            Core.Input.KeyPressed += OnInputOnKeyPressed;
+            shape = new CircleShape { FillColor = Color.White, Radius = 50 };
         }
+
+        private void OnInputOnKeyPressed(KeyEventArgs args)
+        {
+            switch (args.Code)
+            {
+                case Keyboard.Key.W:
+                case Keyboard.Key.Up:
+                    EnterDoor();
+                    break;
+                case Keyboard.Key.A:
+                case Keyboard.Key.Left:
+                    Move(new Vector2i(-1, 0));
+                    break;
+                case Keyboard.Key.D:
+                case Keyboard.Key.Right:
+                    Move(new Vector2i(1, 0));
+                    break;
+                case Keyboard.Key.S:
+                case Keyboard.Key.Down:
+                    Move(new Vector2i(0, 1));
+                    break;
+            }
+        }
+
+        private void EnterDoor()
+        {
+            var tileType = Core.World.GetTileAt(Position);
+            if (tileType is Door)
+                GameWorld.LoadNextLevel();
+        }
+
+
+        protected override void DestroyMe()
+        {
+            Core.Input.KeyPressed -= OnInputOnKeyPressed;
+        }
+
+        ~Player()
+        {
+            Logger.Log("Destroyed Player", Category.SuperLowDebug);
+        }
+
 
         void Move(Vector2i delta)
         {
-            var tileState = Core.World.GetTileState(Position + delta);
-            switch (tileState)
+            var tileType = Core.World.GetTileAt(Position + delta);
+            switch (tileType)
             {
-                case TileState.Walkable:
-                    //Position += delta;
+                case Wall wall:
                     break;
-                case TileState.Pit:
-                    //if(HoldingBlock)
-                    break;
-                case TileState.Wall:
-                    break;
-                case TileState.Door:
-                    break;
-                case TileState.Block:
+                case Empty empty:
+                    {
+                        var contents = empty.Contents;
+                        if (empty.Contents is Box)
+                        {
+                            var destinationPushTile = Core.World.GetTileAt(Position + delta * 2);
+                            if (destinationPushTile is Empty && (destinationPushTile as Empty).Contents == null)
+                            {
+                                empty.Contents.Position += delta;
+                                TryToMoveTo(Position + delta);
+                            }
+                        }
+                        else
+                        {
+                            TryToMoveTo(Position + delta);
+                        }
+                    }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new Exception();
             }
+        }
+
+        void TryToMoveTo(Vector2i destination)
+        {
+            var tile = Core.World.GetTileAt(destination);
+            var beneath = Core.World.GetTileAt(destination + new Vector2i(0, 1));
+            if ((tile as Empty)?.Contents == null)
+            {
+                //this block is available to move to
+                if ((beneath as Empty)?.Contents != null || beneath is Wall)
+                {
+                    Position = destination;
+                }
+            }
+
         }
 
         private CircleShape shape;
 
         public bool HoldingBlock { get; set; }
-        public override void Draw(RenderTarget target, RenderStates states)
+
+        protected override void DrawMe(RenderTarget target, RenderStates states)
         {
-            //shape.Radius = 
+            shape.Draw(target, states);
         }
 
-        public override void Update()
+        protected override void UpdateMe()
         {
-            
+            shape.Position = (Vector2f)Position * shape.Radius * 2;
         }
     }
 }

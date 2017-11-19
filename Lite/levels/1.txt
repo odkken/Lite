@@ -1,3 +1,6 @@
-x     x
-x c d x
-xxxxxxx
+x         x
+x         x
+x         x
+x         x
+x  c    d x
+xxxxxxxxxxx
