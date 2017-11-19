@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Lite.Lib.GameCore;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class CommandExtractor
     {
@@ -58,8 +59,16 @@ namespace Lite
                                 return new List<string>();
                             }
 
-                            var returnVal = method.Invoke(null, typedArgs.ToArray());
-
+                            object returnVal = null;
+                            try
+                            {
+                                returnVal = method.Invoke(null, typedArgs.ToArray());
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.Log($"Error executing command {method.Name}:\n{e}", Category.Error);
+                                return new List<string>();
+                            }
                             if (returnVal is IEnumerable<object>)
                                 return (returnVal as IEnumerable<object>).Select(a => a.ToString()).ToList();
                             return new List<string> { returnVal?.ToString() };

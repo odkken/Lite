@@ -1,6 +1,6 @@
 ﻿using SFML.Graphics;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public enum Tag
     {

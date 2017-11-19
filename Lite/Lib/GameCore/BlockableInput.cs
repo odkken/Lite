@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using SFML.Window;
 
-namespace Lite
+namespace Lite.Lib.GameCore
 {
     public class BlockableInput : IInput
     {

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lite.Lib.GameCore;
 using SFML.Graphics;
 using SFML.System;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
 
     public class WrappedTextRenderer : IWrappedTextRenderer

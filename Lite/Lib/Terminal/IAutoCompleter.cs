@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public interface IAutoCompleter : Drawable
     {

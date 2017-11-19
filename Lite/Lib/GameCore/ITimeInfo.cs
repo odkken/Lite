@@ -1,4 +1,4 @@
-namespace Lite
+namespace Lite.Lib.GameCore
 {
     public interface ITimeInfo
     {

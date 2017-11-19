@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Lite
+namespace Lite.Lib.GameCore
 {
     internal class TimeInfo : ITimeInfo
     {

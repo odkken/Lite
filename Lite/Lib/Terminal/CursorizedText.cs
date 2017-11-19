@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreLinq;
 using SFML.Graphics;
 using SFML.System;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class CursorizedText : ICursorizedText
     {
@@ -243,6 +242,8 @@ namespace Lite
             }
         }
 
+        public event Action<string> OnTextChanged;
+
         public void Delete()
         {
             if (_selectionActive)
@@ -361,6 +362,7 @@ namespace Lite
             {
                 _displayString = value;
                 _text.DisplayedString = value.Replace("\n", "");
+                OnTextChanged?.Invoke(_displayString);
             }
         }
     }

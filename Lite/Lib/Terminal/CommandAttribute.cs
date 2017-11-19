@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class CommandAttribute : Attribute
     {

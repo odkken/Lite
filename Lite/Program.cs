@@ -1,7 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using Lite.Lib.Entities;
+using Lite.Lib.GameCore;
+using Lite.Lib.Terminal;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -36,12 +39,15 @@ namespace Lite
                  if (eventArgs.Code == Keyboard.Key.Escape)
                      window.Close();
              };
-            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size));
+            ILogger logger = null;
+            var world = new World();
+            Entity.SetRegistrationAction(world.RegisterEntity);
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), world, () => logger);
 
             var consoleFont = new Font("fonts/consola.ttf");
             CommandRunner runner = null;
-            terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => _commands.Where(a => a.Name.ToLower().Contains(s)).Select(a=> a.Name).ToList());
-            var logger = new LambdaLogger(terminal.LogMessage);
+            terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a=> a.Length).ToList());
+            logger = new LambdaLogger(terminal.LogMessage);
 
             var commandExtractor = new CommandExtractor(logger);
             _commands = commandExtractor.GetAllStaticCommands(Assembly.GetExecutingAssembly());
@@ -50,6 +56,8 @@ namespace Lite
             sc(.5f, .5f, .2f, .5f);
             var dtText = new Text("", consoleFont) { Position = new Vector2f(500, 600) };
             var dtBuffer = new Queue<float>();
+
+            world.Load(File.ReadAllLines("levels/1.txt").ToList());
             while (window.IsOpen)
             {
                 timeInfo.Tick();
@@ -62,8 +70,10 @@ namespace Lite
                 dtText.DisplayedString = dtBuffer.Average().ToString();
                 window.DispatchEvents();
                 window.Clear(Color.Black);
-                window.Draw(terminal);
+                world.Update();
+                window.Draw(world);
                 window.Draw(dtText);
+                window.Draw(terminal);
                 window.Display();
             }
         }
@@ -95,6 +105,4 @@ namespace Lite
             terminal.SetHighlightColor(new Color((byte)(255 * r), (byte)(255 * g), (byte)(255 * b), (byte)(255 * a)));
         }
     }
-
-
 }

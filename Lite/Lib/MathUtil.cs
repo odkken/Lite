@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using SFML.Graphics;
 using SFML.System;
 
-namespace Lite
+namespace Lite.Lib
 {
     public static class MathUtil
     {

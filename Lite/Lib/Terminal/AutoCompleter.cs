@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lite.Lib.GameCore;
 using SFML.Graphics;
 using SFML.System;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class AutoCompleter : IAutoCompleter
     {
@@ -24,22 +25,27 @@ namespace Lite
 
         public void UpdateInputString(string str)
         {
-            _suggestionTexts = _getSuggestions(str).Select(a => new Text()
+            var suggestions = _getSuggestions(str).Take(10).ToList();
+
+            if (!suggestions.Any())
+            {
+                IsActive = false;
+                return;
+            }
+            _suggestionTexts = suggestions.Select(a => new Text
             {
                 Font = _font,
                 CharacterSize = _charSize,
                 DisplayedString = a,
                 Color = Color.White
             }).Take(10).ToList();
-            if (!_suggestionTexts.Any())
-                return;
             var height = 0;
             foreach (var suggestionText in _suggestionTexts)
             {
-                suggestionText.Position = _displayRegion.Position + new Vector2f(0, height);
+                suggestionText.Position = _displayRegion.Position + new Vector2f(3, height);
                 height += (int)_charSize;
             }
-            _displayRegion.Size = new Vector2f(_suggestionTexts.Max(a => a.GetLocalBounds().Width), height);
+            _displayRegion.Size = new Vector2f(_suggestionTexts.Max(a => a.GetLocalBounds().Width + 6), height + _charSize * .5f);
             _renderView.Reset(_displayRegion.GetGlobalBounds());
             IsActive = true;
             _selectionIndex = 0;
@@ -64,12 +70,12 @@ namespace Lite
             ApplySelectionRect();
         }
 
-        private readonly RectangleShape _selectionRect = new RectangleShape { FillColor = new Color(25, 255, 255, 50) };
+        private readonly RectangleShape _selectionRect = new RectangleShape { FillColor = new Color(155, 255, 255, 50) };
         private void ApplySelectionRect()
         {
             var selectedTextBounds = _suggestionTexts[_selectionIndex].GetGlobalBounds();
-            _selectionRect.Position = new Vector2f(selectedTextBounds.Left, selectedTextBounds.Top);
-            _selectionRect.Size = new Vector2f(selectedTextBounds.Width, selectedTextBounds.Height);
+            _selectionRect.Size = new Vector2f(selectedTextBounds.Width, _charSize);
+            _selectionRect.Position = new Vector2f(selectedTextBounds.Left, (_selectionIndex + .25f) * _charSize);
         }
 
         public void DecrementSelection()
@@ -84,7 +90,7 @@ namespace Lite
         {
             return _suggestionTexts[_selectionIndex].DisplayedString;
         }
-
+        
         public void Draw(RenderTarget target, RenderStates states)
         {
             if (!IsActive)
@@ -93,7 +99,7 @@ namespace Lite
             target.SetView(_renderView);
             _displayRegion.Draw(target, states);
             _suggestionTexts.ForEach(a => a.Draw(target, states));
-            _selectionRect.Draw(target,states);
+            _selectionRect.Draw(target, states);
             target.SetView(target.DefaultView);
         }
     }

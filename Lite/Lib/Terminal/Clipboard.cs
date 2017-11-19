@@ -26,9 +26,8 @@ THE SOFTWARE.
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class Clippy
     {

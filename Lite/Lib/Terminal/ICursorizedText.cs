@@ -1,7 +1,8 @@
-﻿using SFML.Graphics;
+﻿using System;
+using SFML.Graphics;
 using SFML.System;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public interface ICursorizedText : Drawable
     {
@@ -21,5 +22,6 @@ namespace Lite
         void HandleMouseMoved(Vector2f position);
         void SetHighlightColor(Color color);
         string SelectedText { get; }
+        event Action<string> OnTextChanged;
     }
 }

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using MoreLinq;
+using Lite.Lib.GameCore;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public enum OpenState
     {
@@ -26,7 +26,7 @@ namespace Lite
         private readonly float _openingRate = 7f;
 
         private readonly RectangleShape _reportBackground;
-        private readonly Color _reportBackgroundColor = new Color(10, 10, 10, 220);
+        private readonly Color _reportBackgroundColor = new Color(10, 10, 10, 250);
         private List<string> _inputHistory = new List<string>();
         private float _currentOpenness;
         private static readonly Color InputTextColor = new Color(155, 255, 255);
@@ -78,8 +78,9 @@ namespace Lite
                     return Color.White.Lerp(new Color(255, 255, 255, 0), fraction);
                 });
 
-            _completer = new AutoCompleter(getSuggestions, () => _inputBackground.Position + new Vector2f(0, CharacterSize * 1.5f), font, CharacterSize);
+            _completer = new AutoCompleter(getSuggestions, () => _inputBackground.Position + new Vector2f(5, CharacterSize * 1.5f), font, CharacterSize);
 
+            _inputText.OnTextChanged += str => _completer.UpdateInputString(str);
             var inputHistoryIndex = 0;
             var toggled = false;
             input.TextEntered += args =>
@@ -140,7 +141,6 @@ namespace Lite
                                 if (string.IsNullOrEmpty(text))
                                     break;
                                 _inputText.AddString(text);
-                                _completer.UpdateInputString(_inputText.ToString());
                                 break;
                         }
                     else toggled = false;
@@ -241,6 +241,10 @@ namespace Lite
                             _inputText.SetString(_completer.ChooseSelectedItem());
                             _completer.Escape();
                         }
+                        break;
+                    case Keyboard.Key.Space:
+                        if (input.IsControlDown && !_completer.IsActive)
+                            _completer.UpdateInputString(_inputText.ToString());
                         break;
                 }
                 if (toggled)

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lite
+namespace Lite.Lib.GameCore
 {
     public class LambdaLogger : ILogger
     {

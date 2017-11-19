@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class CommandRunner : ICommandRunner
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using SFML.Window;
 
-namespace Lite
+namespace Lite.Lib.GameCore
 {
     public interface IInput
     {

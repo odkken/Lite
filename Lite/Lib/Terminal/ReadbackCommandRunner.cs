@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Lite
+namespace Lite.Lib.Terminal
 {
     public class ReadbackCommandRunner : ICommandRunner
     {
