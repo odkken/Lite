@@ -13,7 +13,7 @@ namespace Lite.Lib.Entities
         public Player()
         {
             Core.Input.KeyPressed += OnInputOnKeyPressed;
-            shape = new CircleShape { FillColor = Color.White, Radius = 50 };
+            _shape = new CircleShape { FillColor = Color.White, Radius = 50 };
         }
 
         private void OnInputOnKeyPressed(KeyEventArgs args)
@@ -60,21 +60,41 @@ namespace Lite.Lib.Entities
 
         void Move(Vector2i delta)
         {
-            var tileType = Core.World.GetTileAt(Position + delta);
+            var destination = Position + delta;
+            var tileType = Core.World.GetTileAt(destination);
             switch (tileType)
             {
                 case Wall wall:
+                    {
+                    }
                     break;
                 case Empty empty:
                     {
-                        var contents = empty.Contents;
                         if (empty.Contents is Box)
                         {
-                            var destinationPushTile = Core.World.GetTileAt(Position + delta * 2);
-                            if (destinationPushTile is Empty && (destinationPushTile as Empty).Contents == null)
+                            if (HoldingBlock)
                             {
-                                empty.Contents.Position += delta;
-                                TryToMoveTo(Position + delta);
+                                var tileAboveUs = Core.World.GetTileAt(Position + new Vector2i(0, -1));
+                                ((Box)(tileAboveUs as Empty).Contents).Position += delta;
+                                HoldingBlock = false;
+                            }
+                            else
+                            {
+
+                                var box = empty.Contents;
+                                var destinationPushTile = Core.World.GetTileAt(destination + delta);
+                                if (destinationPushTile is Empty && (destinationPushTile as Empty).Contents == null)
+                                {
+                                    box.Position += delta;
+                                    TryToMoveTo(destination);
+                                }
+                                else if ((destinationPushTile is Wall || (destinationPushTile as Empty)?.Contents != null) && (Core.World.GetTileAt(destination + new Vector2i(0, -1)) as Empty)?.Contents == null)
+                                {
+                                    box.Position = Position - new Vector2i(0, 1);
+                                    HoldingBlock = true;
+                                    Position += delta;
+                                    box.Position += delta;
+                                }
                             }
                         }
                         else
@@ -90,31 +110,43 @@ namespace Lite.Lib.Entities
 
         void TryToMoveTo(Vector2i destination)
         {
-            var tile = Core.World.GetTileAt(destination);
-            var beneath = Core.World.GetTileAt(destination + new Vector2i(0, 1));
-            if ((tile as Empty)?.Contents == null)
+            var destinationTile = Core.World.GetTileAt(destination);
+            var tileBeneathDestination = Core.World.GetTileAt(destination + new Vector2i(0, 1));
+            var tileAboveUs = Core.World.GetTileAt(Position + new Vector2i(0, -1));
+            if ((destinationTile as Empty)?.Contents == null)
             {
-                //this block is available to move to
-                if ((beneath as Empty)?.Contents != null || beneath is Wall)
+                if (tileBeneathDestination is Empty && (tileBeneathDestination as Empty).Contents == null)
+                {
+                    //place box in front of us (it's a pit)
+                    if (HoldingBlock)
+                    {
+                        ((Box)(tileAboveUs as Empty).Contents).Position = destination;
+                        HoldingBlock = false;
+                    }
+                }
+                if ((tileBeneathDestination as Empty)?.Contents != null || tileBeneathDestination is Wall)
                 {
                     Position = destination;
+                    if (HoldingBlock)
+                        ((Box)(tileAboveUs as Empty).Contents).Position = Position + new Vector2i(0, -1);
                 }
             }
 
+
         }
 
-        private CircleShape shape;
+        private readonly CircleShape _shape;
 
         public bool HoldingBlock { get; set; }
 
         protected override void DrawMe(RenderTarget target, RenderStates states)
         {
-            shape.Draw(target, states);
+            _shape.Draw(target, states);
         }
 
         protected override void UpdateMe()
         {
-            shape.Position = (Vector2f)Position * shape.Radius * 2;
+            _shape.Position = (Vector2f)Position * _shape.Radius * 2;
         }
     }
 }

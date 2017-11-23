@@ -14,7 +14,7 @@ namespace Lite
 {
     public static class Program
     {
-        private static Terminal terminal;
+        private static Terminal _terminal;
         private static List<CommandData> _commands;
         private static World _world;
 
@@ -74,10 +74,10 @@ namespace Lite
             Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), _world, () => logger, new TextInfo() { DefaultFont = consoleFont });
 
             CommandRunner runner = null;
-            terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());
+            _terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());
             logger = new LambdaLogger((a, b) =>
             {
-                if (b >= logCategory) terminal.LogMessage(a, b);
+                if (b >= logCategory) _terminal.LogMessage(a, b);
             });
 
             var commandExtractor = new CommandExtractor(logger);
@@ -89,6 +89,7 @@ namespace Lite
             var dtBuffer = new Queue<float>();
 
             _world.Load(1);
+            ToggleCoords();
             while (window.IsOpen)
             {
                 timeInfo.Tick();
@@ -108,7 +109,7 @@ namespace Lite
                 _world.Update();
                 window.Draw(_world);
                 window.Draw(dtText);
-                window.Draw(terminal);
+                window.Draw(_terminal);
                 window.Display();
             }
         }
@@ -137,7 +138,7 @@ namespace Lite
         [Command]
         public static void sc(float r, float g, float b, float a)
         {
-            terminal.SetHighlightColor(new Color((byte)(255 * r), (byte)(255 * g), (byte)(255 * b), (byte)(255 * a)));
+            _terminal.SetHighlightColor(new Color((byte)(255 * r), (byte)(255 * g), (byte)(255 * b), (byte)(255 * a)));
         }
 
         private static int gcFrame = 0;

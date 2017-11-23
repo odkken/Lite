@@ -30,7 +30,8 @@ namespace Lite.Lib.Entities
 
         protected override void UpdateMe()
         {
-            if (GameWorld.GetTileAt(Position + new Vector2i(0, 1)) is Empty)
+            var belowPos = GameWorld.GetTileAt(Position + new Vector2i(0, 1));
+            if (belowPos is Empty && (belowPos as Empty).Contents == null)
                 Position += new Vector2i(0, 1);
             shape.Size = new Vector2f(Tile.TileSize, Tile.TileSize);
             shape.Position = (Vector2f)(Position * Tile.TileSize);

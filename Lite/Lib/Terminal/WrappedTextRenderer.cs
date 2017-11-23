@@ -11,26 +11,19 @@ namespace Lite.Lib.Terminal
     public class WrappedTextRenderer : IWrappedTextRenderer
     {
         private readonly Func<FloatRect> _getBoundsForText;
-        private readonly Func<Vector2f> _getWindowDimensions;
         private readonly Font _font;
         private readonly uint _charSize;
-        private RectangleShape scrollBar;
-        private RectangleShape scrollChannel;
 
         public WrappedTextRenderer(Func<FloatRect> getBounds, Func<Vector2f> getWindowDimensions, Font font, uint charSize, Dictionary<Tag, Color> colorLookup)
         {
             var bounds = getBounds();
             _getFullBounds = getBounds;
-            scrollChannel = new RectangleShape(new Vector2f(30, bounds.Height))
-            {
-                FillColor = new Color(150, 150, 150, 100)
-            };
+            
             _getBoundsForText = () =>
             {
                 var allBounds = getBounds();
-                return new FloatRect(allBounds.Left + 2, allBounds.Top, allBounds.Width - scrollChannel.Size.X - 4, allBounds.Height);
+                return new FloatRect(allBounds.Left + 2, allBounds.Top, allBounds.Width - 4, allBounds.Height);
             };
-            _getWindowDimensions = getWindowDimensions;
             _font = font;
             _charSize = charSize;
             _colorLookup = colorLookup;
@@ -43,10 +36,6 @@ namespace Lite.Lib.Terminal
         public void Draw(RenderTarget target, RenderStates states)
         {
             var boundsForText = _getBoundsForText();
-            var fullBounds = _getFullBounds();
-            scrollChannel.Position = new Vector2f(fullBounds.Right() - scrollChannel.Size.X, fullBounds.Top);
-            scrollChannel.Draw(target, states);
-            var windowSize = _getWindowDimensions();
             _textViewport.Viewport = Core.WindowUtil.GetFractionalRect(boundsForText);
             target.SetView(_textViewport);
             _textsToDraw.ForEach(a => a.Text.Draw(target, states));

@@ -27,6 +27,7 @@ namespace Lite.Lib.GameCore
             var y = 0;
             Map = new Tile[lines.Max(a => a.Length), lines.Count];
             coords = new Text[Map.GetLength(0), Map.GetLength(1)];
+            var nonTileEntityInitializations = new List<Action>();
             foreach (var line in lines)
             {
                 Core.Logger.Log(line);
@@ -46,7 +47,12 @@ namespace Lite.Lib.GameCore
                                 var tile = new Empty();
                                 tile.SetPosition(new Vector2i(x, y));
                                 Map[x, y] = tile;
-                                new Box().Position = new Vector2i(x, y);
+                                var x1 = x;
+                                var y1 = y;
+                                nonTileEntityInitializations.Add(() =>
+                                {
+                                    new Box().Position = new Vector2i(x1, y1);
+                                });
                             }
                             break;
                         case 'c':
@@ -54,7 +60,12 @@ namespace Lite.Lib.GameCore
                                 var tile = new Empty();
                                 tile.SetPosition(new Vector2i(x, y));
                                 Map[x, y] = tile;
-                                new Player().Position = new Vector2i(x, y);
+                                var x1 = x;
+                                var y1 = y;
+                                nonTileEntityInitializations.Add(() =>
+                                {
+                                    new Player().Position = new Vector2i(x1, y1);
+                                });
                             }
                             break;
                         case ' ':
@@ -85,6 +96,8 @@ namespace Lite.Lib.GameCore
                     }
                 }
             }
+
+            nonTileEntityInitializations.ForEach(a=> a());
         }
 
         public Vector2i PlayerCoord { get; }
