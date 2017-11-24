@@ -29,8 +29,10 @@ namespace Lite.Lib.Entities
             Rect = new RectangleShape(new Vector2f(tileSize, tileSize)) { Position = (Vector2f)((coord * tileSize) + origin), OutlineThickness = -2, OutlineColor = new Color(150, 150, 150, 200) };
             if (goal)
             {
-                _goalIndicator = new Sprite(GoalTexture) { Position = Rect.Position };
-                _goalIndicator.Scale /= GoalTexture.Size.X * 1f / tileSize;
+                var targetSize = .5f * tileSize;
+                _goalIndicator = new Sprite(GoalTexture);
+                _goalIndicator.Scale *= targetSize/GoalTexture.Size.X;
+                _goalIndicator.Position = Rect.Position + new Vector2f(targetSize/2, targetSize/2);
             }
             Activated = false;
             input.MouseButtonDown += args =>
@@ -47,8 +49,6 @@ namespace Lite.Lib.Entities
 
         public void Draw(RenderTarget target, RenderStates states)
         {
-            if (_disabled)
-                return;
             Rect.Draw(target, states);
             DrawMe(target, states);
             if (_goal)
@@ -62,7 +62,7 @@ namespace Lite.Lib.Entities
             get => _activated;
             set
             {
-                if(_disabled)
+                if (_disabled)
                     return;
                 _activated = value;
                 if (Core.World.Initialized)

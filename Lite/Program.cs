@@ -47,13 +47,13 @@ namespace Lite
         static void LoadLevel(int level)
         {
             _inited = false;
-            _board?.Disable();
             _board = new Board(level, Core.Input);
             _inited = true;
             _victoryShown = false;
             _board.OnSolved += l =>
             {
                 _currentLevel = l + 1;
+                _board.Disable();
                 _victoryShown = true;
             };
 
