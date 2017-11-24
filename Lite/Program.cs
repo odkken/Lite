@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Lite.Lib.Entities;
 using Lite.Lib.GameCore;
+using Lite.Lib.Interface;
 using Lite.Lib.Terminal;
 using SFML.Graphics;
 using SFML.System;
@@ -16,25 +17,6 @@ namespace Lite
     {
         private static Terminal _terminal;
         private static List<CommandData> _commands;
-        private static World _world;
-
-        [Command]
-        public static void Load(int level)
-        {
-            _world.Load(level);
-        }
-
-
-        [Command]
-        public static List<string> PrintEntities()
-        {
-            return _world.Entities;
-        }
-        [Command]
-        public static void ToggleCoords()
-        {
-            _world.DrawCoordText = !_world.DrawCoordText;
-        }
 
         [Command]
         public static List<string> help()
@@ -45,12 +27,39 @@ namespace Lite
         [Command]
         public static void SetLogLevel(string category)
         {
-            logCategory = Enum.Parse<Category>(category, true);
+            _logCategory = Enum.Parse<Category>(category, true);
         }
 
-        private static Category logCategory = Category.Debug;
+        private static Category _logCategory = Category.Debug;
 
-        static void Main(string[] args)
+        [Command]
+        public static void Undo()
+        {
+            _board.Undo();
+        }
+
+        [Command]
+        public static void Load()
+        {
+
+        }
+
+        static void LoadLevel(int level)
+        {
+            _inited = false;
+            _board?.Disable();
+            _board = new Board(level, Core.Input);
+            _inited = true;
+            _victoryShown = false;
+            _board.OnSolved += l =>
+            {
+                _currentLevel = l + 1;
+                _victoryShown = true;
+            };
+
+        }
+
+        public static void Main()
         {
             var window = new RenderWindow(new VideoMode(1920, 1080), "Lite", Styles.None, new ContextSettings { AntialiasingLevel = 0 });
             window.SetVerticalSyncEnabled(false);
@@ -68,16 +77,15 @@ namespace Lite
                      window.Close();
              };
             ILogger logger = null;
-            _world = new World(i => File.ReadAllLines($"levels/{i}.txt").ToList());
-            Entity.SetActions(_world.RegisterEntity, _world.SetPosition);
             var consoleFont = new Font("fonts/consola.ttf");
-            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), _world, () => logger, new TextInfo() { DefaultFont = consoleFont });
+            _inited = false;
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont }, new World(()=> _inited));
 
             CommandRunner runner = null;
             _terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());
             logger = new LambdaLogger((a, b) =>
             {
-                if (b >= logCategory) _terminal.LogMessage(a, b);
+                if (b >= _logCategory) _terminal.LogMessage(a, b);
             });
 
             var commandExtractor = new CommandExtractor(logger);
@@ -88,8 +96,18 @@ namespace Lite
             var dtText = new Text("", consoleFont) { Position = new Vector2f(500, 600) };
             var dtBuffer = new Queue<float>();
 
-            _world.Load(1);
-            ToggleCoords();
+            var victoryButton = new Text("Continue", consoleFont, 55);
+            
+            gameInput.MouseButtonDown += args =>
+            {
+                if (_victoryShown && victoryButton.GetLocalBounds().Contains(args.X, args.Y))
+                {
+                    LoadLevel(_currentLevel);
+                }
+            };
+
+            LoadLevel(1);
+
             while (window.IsOpen)
             {
                 timeInfo.Tick();
@@ -101,14 +119,16 @@ namespace Lite
                 }
                 dtText.DisplayedString = dtBuffer.Average().ToString();
                 window.DispatchEvents();
+                _board.Update();
                 window.Clear(Color.Black);
+                if (_victoryShown)
+                    window.Draw(victoryButton);
+                window.Draw(_board);
                 if (Core.TimeInfo.CurrentFrame == gcFrame + 1)
                 {
                     logger.Log("GC frame time: " + Core.TimeInfo.CurrentDt, Category.SuperLowDebug);
                 }
-                _world.Update();
-                window.Draw(_world);
-                window.Draw(dtText);
+                //window.Draw(dtText);
                 window.Draw(_terminal);
                 window.Display();
             }
@@ -142,6 +162,11 @@ namespace Lite
         }
 
         private static int gcFrame = 0;
+        private static Board _board;
+        private static int _currentLevel;
+        private static bool _victoryShown;
+        private static bool _inited;
+
         public static void LogGcFrame()
         {
             var frame = Core.TimeInfo.CurrentFrame;

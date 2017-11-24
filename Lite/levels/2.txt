@@ -1,7 +1,1 @@
-x         x
-x         x
-x         x
-x         x
-x cb    d x
-xxxxx xxxxx
-    xxx
+gg

@@ -116,7 +116,7 @@ namespace Lite.Lib.Terminal
                                 break;
                             case "\r":
                                 {
-                                    if (_completer.IsActive)
+                                    if (false)//_completer.IsActive)
                                     {
                                         _inputText.SetString(_completer.ChooseSelectedItem());
                                         _completer.Escape();

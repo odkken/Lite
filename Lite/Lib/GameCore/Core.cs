@@ -9,8 +9,9 @@ namespace Lite.Lib.GameCore
         public static IInput Input { get; private set; }
         public static ILogger Logger => _getLogger();
         public static ITextInfo Text { get; private set; }
+        public static IWorld World { get; private set; }
 
-        public static void Initialize(ITimeInfo timeInfo, IInput input, IWindowUtil windowUtil, IWorld world, Func<ILogger> getLogger, ITextInfo text)
+        public static void Initialize(ITimeInfo timeInfo, IInput input, IWindowUtil windowUtil, Func<ILogger> getLogger, ITextInfo text, World world)
         {
             if (_initialized)
                 return;
@@ -18,13 +19,28 @@ namespace Lite.Lib.GameCore
             TimeInfo = timeInfo;
             Input = input;
             WindowUtil = windowUtil;
-            World = world;
             _getLogger = getLogger;
             Text = text;
+            World = world;
         }
 
         public static IWindowUtil WindowUtil;   
-        public static IWorld World;
         private static Func<ILogger> _getLogger;
+    }
+
+    public interface IWorld
+    {
+        bool Initialized { get; }
+    }
+
+    public class World : IWorld
+    {
+        private readonly Func<bool> _isInitialized;
+
+        public World(Func<bool> isInitialized)
+        {
+            _isInitialized = isInitialized;
+        }
+        public bool Initialized => _isInitialized();
     }
 }

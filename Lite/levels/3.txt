@@ -1,7 +1,1 @@
-x         x
-x         x
-x         x
-x         x
-x bc    d x
-xxxxx xxxxx
-    xxx
+gag
