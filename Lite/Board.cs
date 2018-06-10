@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Lite.Lib.Entities;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using SFML.Graphics;
@@ -17,37 +16,42 @@ namespace Lite
         private readonly int _level;
         private readonly List<ITile> _tiles;
         private readonly Stack<ITile> _lastClickeds = new Stack<ITile>();
-        public Board(int level, IInput input)
+        public Board(int level, IInput input, Action<Character> spawnCharacter)
         {
             _level = level;
             _tiles = new List<ITile>();
             var lines = File.ReadAllLines($"levels/{level}.txt");
             var tileSize = 200;
+            var sv = new Vector2f(tileSize, tileSize);
             var rows = lines.Length;
-            var cols = lines[0].Length;
+            var cols = lines.Select(a => a.Length).Max();
             var totalWidth = cols * tileSize;
             var totalHeight = rows * tileSize;
             var halfWindowSize = (Vector2i)Core.WindowUtil.GetPixelSize(new Vector2f(.5f, .5f));
             var origin = new Vector2i(halfWindowSize.X - totalWidth / 2, halfWindowSize.Y - totalHeight / 2);
-            int i = 0;
-            int j = 0;
+            var i = 0;
+            var j = 0;
+            var getScreenPos = new Func<Vector2i, Vector2f>(c => new Vector2f(origin.X + tileSize * c.X, origin.Y + tileSize * c.Y));
             try
             {
                 for (; i < lines.Length; i++)
                 {
-                    for (; j < lines.First().Length; j++)
+                    j = 0;
+                    for (; j < lines[i].Length; j++)
                     {
                         ITile tile;
+                        var pv = new Vector2i(j, i);
                         switch (lines[i][j])
                         {
-                            case 'a':
-                                tile = new BasicTile(new Vector2i(j, i), origin, this, input, SetLastClicked, false, tileSize) { Activated = true };
+                            case ' ':
+                                tile = new EmptyTile(pv, sv, getScreenPos);
                                 break;
                             case 'g':
-                                tile = new BasicTile(new Vector2i(j, i), origin, this, input, SetLastClicked, true, tileSize);
+                                tile = new GoalTile(pv, sv, getScreenPos);
                                 break;
-                            case 'x':
-                                tile = new BasicTile(new Vector2i(j, i), origin, this, input, SetLastClicked, false, tileSize);
+                            case 'c':
+                                spawnCharacter(new Character(input, pv, sv, getScreenPos, vector2I => true, BaseTile.OutlineThickness));
+                                tile = new EmptyTile(pv, sv, getScreenPos);
                                 break;
                             default: throw new Exception($"unknown character '{lines[i][j]}'");
                         }
@@ -60,37 +64,17 @@ namespace Lite
                 Core.Logger.Log($"Error parsing level {level} (i,j) = {i},{j}:\n{e.Message}\n{e.StackTrace}", Category.Error);
                 _tiles.Clear();
             }
-
-            input.KeyPressed += args =>
-                {
-                    if (args.Code == Keyboard.Key.Z)
-                        Undo();
-                };
+            
         }
 
         public event Action<int> OnSolved;
-
-        public void SetLastClicked(ITile tile)
-        {
-            _lastClickeds.Push(tile);
-        }
-
-        public void Undo()
-        {
-            if (_lastClickeds.Any())
-                _lastClickeds.Pop().Undo();
-        }
+        
 
         public ITile GetTile(Vector2i coord)
         {
             return GetTile(coord.X, coord.Y);
         }
-
-        public void Disable()
-        {
-            _disabled = true;
-            _tiles.ForEach(a=> a.Disable());
-        }
+        
 
         public ITile GetTile(int xCoord, int yCoord)
         {
@@ -107,14 +91,6 @@ namespace Lite
 
         public void Update()
         {
-            if(_disabled)
-                return;
-            if (!_solved && _tiles.Any() && _tiles.All(a => a.Satisfied))
-            {
-                _solved = true;
-                OnSolved?.Invoke(_level);
-            }
-
         }
     }
 }

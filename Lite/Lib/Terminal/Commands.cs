@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Lite.Lib.GameCore;
 
 namespace Lite.Lib.Terminal
 {

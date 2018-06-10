@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using Lite.Lib.Entities;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using Lite.Lib.Terminal;
@@ -32,11 +30,6 @@ namespace Lite
 
         private static Category _logCategory = Category.Debug;
 
-        [Command]
-        public static void Undo()
-        {
-            _board.Undo();
-        }
 
         [Command]
         public static void Load()
@@ -47,13 +40,11 @@ namespace Lite
         static void LoadLevel(int level)
         {
             _inited = false;
-            _board = new Board(level, Core.Input);
+            _board = new Board(level, Core.Input, character => _character = character);
             _inited = true;
             _victoryShown = false;
             _board.OnSolved += l =>
             {
-                _currentLevel = l + 1;
-                _board.Disable();
                 _victoryShown = true;
             };
 
@@ -79,7 +70,7 @@ namespace Lite
             ILogger logger = null;
             var consoleFont = new Font("fonts/consola.ttf");
             _inited = false;
-            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont }, new World(()=> _inited));
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont }, new World(() => _inited));
 
             CommandRunner runner = null;
             _terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());
@@ -93,42 +84,21 @@ namespace Lite
             runner = new CommandRunner(_commands);
 
             sc(.5f, .5f, .2f, .5f);
-            var dtText = new Text("", consoleFont) { Position = new Vector2f(500, 600) };
-            var dtBuffer = new Queue<float>();
 
             var victoryButton = new Text("Continue", consoleFont, 55);
-            
-            gameInput.MouseButtonDown += args =>
-            {
-                if (_victoryShown && victoryButton.GetLocalBounds().Contains(args.X, args.Y))
-                {
-                    LoadLevel(_currentLevel);
-                }
-            };
 
             LoadLevel(1);
 
             while (window.IsOpen)
             {
                 timeInfo.Tick();
-
-                dtBuffer.Enqueue(timeInfo.CurrentDt);
-                while (dtBuffer.Count > 100)
-                {
-                    dtBuffer.Dequeue();
-                }
-                dtText.DisplayedString = dtBuffer.Average().ToString();
                 window.DispatchEvents();
                 _board.Update();
                 window.Clear(Color.Black);
                 if (_victoryShown)
                     window.Draw(victoryButton);
                 window.Draw(_board);
-                if (Core.TimeInfo.CurrentFrame == gcFrame + 1)
-                {
-                    logger.Log("GC frame time: " + Core.TimeInfo.CurrentDt, Category.SuperLowDebug);
-                }
-                //window.Draw(dtText);
+                window.Draw(_character);
                 window.Draw(_terminal);
                 window.Display();
             }
@@ -163,18 +133,9 @@ namespace Lite
 
         private static int gcFrame = 0;
         private static Board _board;
-        private static int _currentLevel;
+        private static Character _character;
         private static bool _victoryShown;
         private static bool _inited;
 
-        public static void LogGcFrame()
-        {
-            var frame = Core.TimeInfo.CurrentFrame;
-            if (frame != gcFrame)
-            {
-                gcFrame = frame;
-                Core.Logger.Log($"gc on frame {Core.TimeInfo.CurrentFrame}.  This frame time = {Core.TimeInfo.CurrentDt}", Category.SuperLowDebug);
-            }
-        }
     }
 }

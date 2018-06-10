@@ -6,6 +6,7 @@ namespace Lite.Lib.GameCore
 {
     public class BlockableInput : IInput
     {
+        private readonly IInput _input;
         private bool _blocked;
 
         private readonly Func<bool> _isControlDown;
@@ -25,11 +26,17 @@ namespace Lite.Lib.GameCore
         public event Action<MouseButtonEventArgs> BlockableMouseButtonUp;
         private event Action<KeyEventArgs> BlockableKeyPressed;
         public event Action<KeyEventArgs> KeyPressed;
+        public bool IsKeyDown(Keyboard.Key key)
+        {
+            return !_blocked && _input.IsKeyDown(key);
+        }
+
         public event Action<TextEventArgs> TextEntered;
         public event Action<TextEventArgs> BlockableTextEntered;
 
         public BlockableInput(IInput input)
         {
+            _input = input;
             input.TextEntered += OnTextEntered;
             input.KeyPressed += OnKeyPressed;
             input.MouseButtonDown += OnMouseDown;
@@ -57,6 +64,7 @@ namespace Lite.Lib.GameCore
 
         public BlockableInput(BlockableInput blockableInput)
         {
+            _input = blockableInput;
             blockableInput.BlockableTextEntered += OnTextEntered;
             blockableInput.BlockableKeyPressed += OnKeyPressed;
             blockableInput.BlockableMouseButtonDown += OnMouseDown;

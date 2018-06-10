@@ -16,5 +16,6 @@ namespace Lite.Lib.GameCore
         void Consume(params Keyboard.Key[] keys);
         void Release();
         event Action<KeyEventArgs> KeyPressed;
+        bool IsKeyDown(Keyboard.Key key);
     }
 }

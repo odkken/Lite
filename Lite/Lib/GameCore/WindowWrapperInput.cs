@@ -29,6 +29,10 @@ namespace Lite.Lib.GameCore
         }
 
         public event Action<KeyEventArgs> KeyPressed;
+        public bool IsKeyDown(Keyboard.Key key)
+        {
+            return Keyboard.IsKeyPressed(key);
+        }
 
         public WindowWrapperInput(Window window)
         {
