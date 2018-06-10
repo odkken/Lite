@@ -50,7 +50,7 @@ namespace Lite
                                 tile = new GoalTile(pv, sv, getScreenPos);
                                 break;
                             case 'c':
-                                spawnCharacter(new Character(input, pv, sv, getScreenPos, vector2I => true, BaseTile.OutlineThickness));
+                                spawnCharacter(new Character(input, pv, sv, getScreenPos, vector2I => _tiles.Any(a=> a.X == vector2I.X && a.Y == vector2I.Y), BaseTile.OutlineThickness));
                                 tile = new EmptyTile(pv, sv, getScreenPos);
                                 break;
                             default: throw new Exception($"unknown character '{lines[i][j]}'");

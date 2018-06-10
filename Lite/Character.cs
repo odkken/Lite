@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lite.Lib.GameCore;
 using SFML.Graphics;
 using SFML.System;
@@ -6,16 +7,20 @@ using SFML.Window;
 
 namespace Lite
 {
+    class RectWithIntPosition
+    {
+        public Vector2i Position { get; set; }
+        public RectangleShape Rect { get; set; }
+    }
     public class Character : Drawable
     {
         private readonly Func<Vector2i, Vector2f> _posToScreenCoord;
-        private RectangleShape _rect;
+        private readonly List<RectWithIntPosition> _rects;
+
         public Character(IInput input, Vector2i position, Vector2f size, Func<Vector2i, Vector2f> posToScreenCoord, Func<Vector2i, bool> canMoveTo, int outlineThickness)
         {
             _posToScreenCoord = posToScreenCoord;
-            _rect = new RectangleShape(size){OutlineThickness = outlineThickness, OutlineColor = Color.Black, FillColor = Color.Cyan};
-            X = position.X;
-            Y = position.Y;
+            _rects = new List<RectWithIntPosition> { new RectWithIntPosition { Rect = new RectangleShape(size) { OutlineThickness = outlineThickness, OutlineColor = Color.Black, FillColor = Color.Cyan }, Position = position } };
             input.KeyPressed += args =>
             {
                 var delta = new Vector2i();
@@ -36,21 +41,28 @@ namespace Lite
                     default:
                         return;
                 }
-                var destination = new Vector2i(X, Y) + delta;
-                if (!canMoveTo(destination)) return;
-                X = destination.X;
-                Y = destination.Y;
+
+                foreach (var rectWithIntPosition in _rects)
+                {
+                    var newPos = rectWithIntPosition.Position + delta;
+                    if (!canMoveTo(newPos)) return;
+                }
+
+                foreach (var rectWithIntPosition in _rects)
+                {
+                    rectWithIntPosition.Position += delta;
+                }
             };
         }
 
         public void Draw(RenderTarget target, RenderStates states)
         {
-            _rect.Position = _posToScreenCoord(new Vector2i(X, Y));
-            _rect.Draw(target, states);
+            foreach (var rect in _rects)
+            {
+                rect.Rect.Position = _posToScreenCoord(new Vector2i(rect.Position.X, rect.Position.Y));
+                rect.Rect.Draw(target, states);
+            }
+            
         }
-
-        public int X { get; private set; }
-
-        public int Y { get; private set; }
     }
 }
