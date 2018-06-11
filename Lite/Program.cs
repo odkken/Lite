@@ -46,7 +46,7 @@ namespace Lite
 
         public static void Main()
         {
-            var window = new RenderWindow(new VideoMode(1920, 1080), "Lite", Styles.None, new ContextSettings { AntialiasingLevel = 0 });
+            var window = new RenderWindow(new VideoMode(1280, 720), "Lite");
             window.SetVerticalSyncEnabled(false);
             window.SetActive();
             window.Closed += (sender, eventArgs) => window.Close();
