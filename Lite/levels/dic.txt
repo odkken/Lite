@@ -1,0 +1,4 @@
+c = character spawn
+o = travel space
+s = key square
+g = keyhole
