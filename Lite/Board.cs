@@ -49,7 +49,7 @@ namespace Lite
                             case 's':
                                 tile = new KeyTile(pv, sv, getScreenPos);
                                 break;
-                            case ' ':
+                            case 'o':
                                 tile = new EmptyTile(pv, sv, getScreenPos);
                                 break;
                             case 'g':

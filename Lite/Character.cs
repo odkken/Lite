@@ -28,15 +28,19 @@ namespace Lite
                 switch (args.Code)
                 {
                     case Keyboard.Key.W:
+                    case Keyboard.Key.Up:
                         delta.Y--;
                         break;
                     case Keyboard.Key.A:
+                    case Keyboard.Key.Left:
                         delta.X--;
                         break;
                     case Keyboard.Key.S:
+                    case Keyboard.Key.Down:
                         delta.Y++;
                         break;
                     case Keyboard.Key.D:
+                    case Keyboard.Key.Right:
                         delta.X++;
                         break;
                     default:
@@ -54,20 +58,25 @@ namespace Lite
                     rectWithIntPosition.Position += delta;
                 }
 
-                var rectsToAdd = _rects.SelectMany(a => getAdjacentKeys(a.Position)).Distinct().ToList();
-                foreach (var item in rectsToAdd)
+                while (true)
                 {
-                    removeKey(item);
-                    _rects.Add(new RectWithIntPosition
+                    var rectsToAdd = _rects.SelectMany(a => getAdjacentKeys(a.Position)).Distinct().ToList();
+                    foreach (var item in rectsToAdd)
                     {
-                        Rect = new RectangleShape(size)
+                        removeKey(item);
+                        _rects.Add(new RectWithIntPosition
                         {
-                            OutlineThickness = outlineThickness,
-                            OutlineColor = Color.Black,
-                            FillColor = Color.Cyan
-                        },
-                        Position = item
-                    });
+                            Rect = new RectangleShape(size)
+                            {
+                                OutlineThickness = outlineThickness,
+                                OutlineColor = Color.Black,
+                                FillColor = Color.Cyan
+                            },
+                            Position = item
+                        });
+                    }
+                    if (!rectsToAdd.Any())
+                        break;
                 }
             };
         }
