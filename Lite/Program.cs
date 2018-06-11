@@ -30,14 +30,8 @@ namespace Lite
 
         private static Category _logCategory = Category.Debug;
 
-
         [Command]
-        public static void Load()
-        {
-
-        }
-
-        static void LoadLevel(int level)
+        public static void LoadLevel(int level)
         {
             _inited = false;
             _board = new Board(level, Core.Input, character => _character = character);

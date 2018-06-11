@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Lite.Lib;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using SFML.Graphics;
@@ -20,7 +21,7 @@ namespace Lite
         {
             _level = level;
             _tiles = new List<ITile>();
-            var lines = File.ReadAllLines($"levels/{level}.txt");
+            var lines = File.ReadAllLines($"..\\..\\..\\levels/{level}.txt");
             var tileSize = 200;
             var sv = new Vector2f(tileSize, tileSize);
             var rows = lines.Length;
@@ -43,6 +44,11 @@ namespace Lite
                         var pv = new Vector2i(j, i);
                         switch (lines[i][j])
                         {
+                            case 'x':
+                                continue;
+                            case 's':
+                                tile = new KeyTile(pv, sv, getScreenPos);
+                                break;
                             case ' ':
                                 tile = new EmptyTile(pv, sv, getScreenPos);
                                 break;
@@ -50,7 +56,11 @@ namespace Lite
                                 tile = new GoalTile(pv, sv, getScreenPos);
                                 break;
                             case 'c':
-                                spawnCharacter(new Character(input, pv, sv, getScreenPos, vector2I => _tiles.Any(a=> a.X == vector2I.X && a.Y == vector2I.Y), BaseTile.OutlineThickness));
+                                spawnCharacter(new Character(input, pv, sv, getScreenPos, vector2I => _tiles.Any(a=> a.X == vector2I.X && a.Y == vector2I.Y), BaseTile.OutlineThickness,
+                                    pos => _tiles.Where(a=> a.GetType() == typeof(KeyTile) && (new Vector2i(a.X, a.Y) - pos).SquareMagnitude() == 1).Select(a=> new Vector2i(a.X, a.Y)).ToList(), item => {
+                                        _tiles.RemoveAll(a => a.X == item.X && a.Y == item.Y);
+                                        _tiles.Add(new EmptyTile(item, sv, getScreenPos));
+                                    }));
                                 tile = new EmptyTile(pv, sv, getScreenPos);
                                 break;
                             default: throw new Exception($"unknown character '{lines[i][j]}'");

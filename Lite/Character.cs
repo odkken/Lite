@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lite.Lib.GameCore;
 using SFML.Graphics;
 using SFML.System;
@@ -17,7 +18,7 @@ namespace Lite
         private readonly Func<Vector2i, Vector2f> _posToScreenCoord;
         private readonly List<RectWithIntPosition> _rects;
 
-        public Character(IInput input, Vector2i position, Vector2f size, Func<Vector2i, Vector2f> posToScreenCoord, Func<Vector2i, bool> canMoveTo, int outlineThickness)
+        public Character(IInput input, Vector2i position, Vector2f size, Func<Vector2i, Vector2f> posToScreenCoord, Func<Vector2i, bool> canMoveTo, int outlineThickness, Func<Vector2i, List<Vector2i>> getAdjacentKeys, Action<Vector2i> removeKey)
         {
             _posToScreenCoord = posToScreenCoord;
             _rects = new List<RectWithIntPosition> { new RectWithIntPosition { Rect = new RectangleShape(size) { OutlineThickness = outlineThickness, OutlineColor = Color.Black, FillColor = Color.Cyan }, Position = position } };
@@ -52,6 +53,22 @@ namespace Lite
                 {
                     rectWithIntPosition.Position += delta;
                 }
+
+                var rectsToAdd = _rects.SelectMany(a => getAdjacentKeys(a.Position)).Distinct().ToList();
+                foreach (var item in rectsToAdd)
+                {
+                    removeKey(item);
+                    _rects.Add(new RectWithIntPosition
+                    {
+                        Rect = new RectangleShape(size)
+                        {
+                            OutlineThickness = outlineThickness,
+                            OutlineColor = Color.Black,
+                            FillColor = Color.Cyan
+                        },
+                        Position = item
+                    });
+                }
             };
         }
 
@@ -62,7 +79,7 @@ namespace Lite
                 rect.Rect.Position = _posToScreenCoord(new Vector2i(rect.Position.X, rect.Position.Y));
                 rect.Rect.Draw(target, states);
             }
-            
+
         }
     }
 }

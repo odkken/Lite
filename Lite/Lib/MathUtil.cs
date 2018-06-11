@@ -41,6 +41,11 @@ namespace Lite.Lib
             return MathF.Sqrt(vector.SquareMagnitude());
         }
 
+        public static int SquareMagnitude(this Vector2i vector)
+        {
+            return vector.X * vector.X + vector.Y * vector.Y;
+        }
+
         public static float SquareMagnitude(this Vector2f vector)
         {
             return vector.X * vector.X + vector.Y * vector.Y;
