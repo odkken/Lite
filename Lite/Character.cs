@@ -81,6 +81,7 @@ namespace Lite
             };
         }
 
+
         public void Draw(RenderTarget target, RenderStates states)
         {
             foreach (var rect in _rects)
