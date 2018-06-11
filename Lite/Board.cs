@@ -22,10 +22,11 @@ namespace Lite
             _level = level;
             _tiles = new List<ITile>();
             var lines = File.ReadAllLines($"..\\..\\..\\levels/{level}.txt");
-            var tileSize = (int)Core.WindowUtil.GetPixelSize(new Vector2f(.2f, .2f)).Y;
-            var sv = new Vector2f(tileSize, tileSize);
             var rows = lines.Length;
             var cols = lines.Select(a => a.Length).Max();
+            var ratio = Core.WindowUtil.GetPixelSize(new Vector2f(1.0f/cols, 1.0f/rows));
+            var tileSize = (int)Math.Min(ratio.X, ratio.Y);
+            var sv = new Vector2f(tileSize, tileSize);
             var totalWidth = cols * tileSize;
             var totalHeight = rows * tileSize;
             var halfWindowSize = (Vector2i)Core.WindowUtil.GetPixelSize(new Vector2f(.5f, .5f));
