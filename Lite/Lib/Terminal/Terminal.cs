@@ -59,7 +59,7 @@ namespace Lite.Lib.Terminal
                     FillColor = _inputBackgroundColor
                 };
 
-            _reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), () => (Vector2f)window.Size, font, CharacterSize, new Dictionary<Tag, Color>
+            _reportText = new WrappedTextRenderer(() => _reportBackground.GetGlobalBounds(), font, CharacterSize, new Dictionary<Tag, Color>
             {
                 { Tag.Input, InputTextColor},
                 { Tag.Response, ResponseTextColor},

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Numerics;
+using SFML.System;
 using SFML.Window;
 
 namespace Lite.Lib.GameCore
@@ -17,5 +19,8 @@ namespace Lite.Lib.GameCore
         void Release();
         event Action<KeyEventArgs> KeyPressed;
         bool IsKeyDown(Keyboard.Key key);
+        Vector2f GetMousePos();
+        bool WasKeyPressed(Keyboard.Key key);
+        Vector2i GetMousePosAbsolute();
     }
 }

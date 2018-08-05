@@ -14,9 +14,8 @@ namespace Lite.Lib.Terminal
         private readonly Font _font;
         private readonly uint _charSize;
 
-        public WrappedTextRenderer(Func<FloatRect> getBounds, Func<Vector2f> getWindowDimensions, Font font, uint charSize, Dictionary<Tag, Color> colorLookup)
+        public WrappedTextRenderer(Func<FloatRect> getBounds, Font font, uint charSize, Dictionary<Tag, Color> colorLookup)
         {
-            var bounds = getBounds();
             _getFullBounds = getBounds;
             
             _getBoundsForText = () =>

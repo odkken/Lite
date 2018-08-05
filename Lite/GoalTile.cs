@@ -11,12 +11,13 @@ namespace Lite
         private readonly Func<Vector2i, Vector2f> _getScreenPos;
         private readonly RectangleShape _rect;
 
-        public BaseTile(Vector2i position, Vector2f size, Func<Vector2i, Vector2f> getScreenPos, Color color, Color outlineColor)
+        protected BaseTile(Vector2i position, Vector2f size, Func<Vector2i, Vector2f> getScreenPos, Color color, Color outlineColor)
         {
             X = position.X;
             Y = position.Y;
             _getScreenPos = getScreenPos;
             _rect = new RectangleShape(size) { FillColor = color, OutlineColor = outlineColor, OutlineThickness = OutlineThickness };
+            _rect.Position = _getScreenPos(new Vector2i(X, Y));
         }
 
         public void Draw(RenderTarget target, RenderStates states)
@@ -27,6 +28,12 @@ namespace Lite
 
         public int X { get; }
         public int Y { get; }
+        public Vector2i PixelPosition => (Vector2i) _rect.Position;
+
+        public void SetColor(Color color)
+        {
+            _rect.FillColor = color;
+        }
     }
     public class GoalTile : BaseTile
     {

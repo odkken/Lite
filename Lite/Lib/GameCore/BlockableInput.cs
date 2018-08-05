@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Numerics;
+using SFML.System;
 using SFML.Window;
 
 namespace Lite.Lib.GameCore
@@ -13,7 +15,6 @@ namespace Lite.Lib.GameCore
         public bool IsControlDown => _isControlDown();
 
         private readonly Func<bool> _isShiftDown;
-        private bool _conditionallyBlocked;
         private Keyboard.Key[] _blockedKeys;
         public bool IsShiftDown => _isShiftDown();
         public event Action<MouseMoveEventArgs> MouseMoved;
@@ -29,6 +30,21 @@ namespace Lite.Lib.GameCore
         public bool IsKeyDown(Keyboard.Key key)
         {
             return !_blocked && _input.IsKeyDown(key);
+        }
+
+        public Vector2f GetMousePos()
+        {
+            return _input.GetMousePos();
+        }
+
+        public bool WasKeyPressed(Keyboard.Key key)
+        {
+            return _input.WasKeyPressed(key);
+        }
+
+        public Vector2i GetMousePosAbsolute()
+        {
+            return _input.GetMousePosAbsolute();
         }
 
         public event Action<TextEventArgs> TextEntered;
@@ -127,6 +143,5 @@ namespace Lite.Lib.GameCore
         {
             _blocked = false;
         }
-
     }
 }

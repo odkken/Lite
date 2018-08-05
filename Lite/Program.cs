@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
+using Lite.Lib;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using Lite.Lib.Terminal;
@@ -29,42 +31,67 @@ namespace Lite
         }
 
         private static Category _logCategory = Category.Debug;
+        private static string _lastLevel;
 
         [Command]
-        public static void LoadLevel(int level)
+        public static void LoadLevel(string name)
         {
-            _inited = false;
-            _board = new Board(level, Core.Input, character => _character = character);
-            _inited = true;
-            _victoryShown = false;
-            _board.OnSolved += l =>
-            {
-                _victoryShown = true;
-            };
+            _board.LoadLevel(name);
+            _lastLevel = name;
+        }
 
+        [Command]
+        public static Vector2f GetMousePos()
+        {
+            return editInput.GetMousePos();
+        }
+
+        [Command]
+        public static void ToggleEdit()
+        {
+            _board.ToggleEdit();
+            if (_board.IsEditing)
+                editInput.Consume();
+            else
+                editInput.Release();
         }
 
         public static void Main()
         {
             var window = new RenderWindow(new VideoMode(1280, 720), "Lite");
-            window.SetVerticalSyncEnabled(false);
+            window.SetVerticalSyncEnabled(true);
             window.SetActive();
             window.Closed += (sender, eventArgs) => window.Close();
 
             var timeInfo = new TimeInfo();
 
             var globalInput = new WindowWrapperInput(window);
-            var terminalInput = new BlockableInput(globalInput);
-            var gameInput = new BlockableInput(terminalInput);
+            globalInput.KeyPressed += args =>
+            {
+                if (args.Code == Keyboard.Key.Escape)
+                    window.Close();
+            };
+
+            terminalInput = new BlockableInput(globalInput);
+            editInput = new BlockableInput(terminalInput);
+            gameInput = new BlockableInput(editInput);
             gameInput.KeyPressed += eventArgs =>
-             {
-                 if (eventArgs.Code == Keyboard.Key.Escape)
-                     window.Close();
-             };
+            {
+                switch (eventArgs.Code)
+                {
+                    case Keyboard.Key.R when gameInput.IsControlDown && _lastLevel != null:
+                        LoadLevel(_lastLevel);
+                        break;
+
+                }
+            };
+
+            var coreBoard = new Board(new TextLevelParser(gameInput));
+            _board = new EditableBoard(coreBoard, (i, i1, arg3) => coreBoard.SetTile(i, i1, arg3), editInput, () => coreBoard.TileSize, a => coreBoard.GetScreenPos(a), () => coreBoard.PixelSize, () => coreBoard.ScreenOffset);
+
             ILogger logger = null;
             var consoleFont = new Font("fonts/consola.ttf");
-            _inited = false;
-            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont }, new World(() => _inited));
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont });
 
             CommandRunner runner = null;
             _terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());
@@ -79,20 +106,16 @@ namespace Lite
 
             sc(.5f, .5f, .2f, .5f);
 
-            var victoryButton = new Text("Continue", consoleFont, 55);
-
-            LoadLevel(1);
+            LoadLevel("1");
 
             while (window.IsOpen)
             {
                 timeInfo.Tick();
                 window.DispatchEvents();
-                _board.Update();
+                _board.Update(timeInfo.CurrentDt);
+                globalInput.Update(timeInfo.CurrentDt);
                 window.Clear(Color.Black);
-                if (_victoryShown)
-                    window.Draw(victoryButton);
                 window.Draw(_board);
-                window.Draw(_character);
                 window.Draw(_terminal);
                 window.Display();
             }
@@ -126,10 +149,10 @@ namespace Lite
         }
 
         private static int gcFrame = 0;
-        private static Board _board;
-        private static Character _character;
-        private static bool _victoryShown;
+        private static IEditableBoard _board;
         private static bool _inited;
-
+        private static BlockableInput terminalInput;
+        private static BlockableInput gameInput;
+        private static BlockableInput editInput;
     }
 }

@@ -1,10 +1,15 @@
-﻿using SFML.System;
+﻿using System;
+using System.Collections;
+using System.Numerics;
+using SFML.Graphics;
+using SFML.System;
 
 namespace Lite.Lib.Interface
 {
-    public interface IBoard
+    public interface IBoard : Drawable
     {
-        ITile GetTile(Vector2i coord);
-        ITile GetTile(int xCoord, int yCoord);
+        (int, int, ITile) GetTileFromScreenCoord(Vector2f fractionalScreenCoord);
+        void Update(float dt);
+        void LoadLevel(string name);
     }
 }
