@@ -26,15 +26,18 @@ namespace Lite.Lib
             var maxX = _tiles.Max(a => a.PixelPosition.X);
             var maxY = _tiles.Max(a => a.PixelPosition.Y);
             ScreenOffset = new Vector2i(minX, minY);
-            PixelSize = new Vector2f(maxX - minX + TileSize.X, maxY - minY + TileSize.Y);
+            PixelSize = new Vector2i(maxX - minX + TileSize.X, maxY - minY + TileSize.Y);
+            Size = new Vector2i(_tiles.Max(a=> a.X)+1, _tiles.Max(a=> a.Y)+1);
         }
 
+        public Vector2i Size { get; set; }
+
         public Vector2i ScreenOffset { get; private set; }
-        public Vector2f PixelSize { get; private set; }
+        public Vector2i PixelSize { get; private set; }
 
         public Func<Vector2i, Vector2f> GetScreenPos { get; set; }
 
-        public Vector2f TileSize { get; private set; }
+        public Vector2i TileSize { get; private set; }
 
         public void Draw(RenderTarget target, RenderStates states)
         {
@@ -52,8 +55,8 @@ namespace Lite.Lib
 
         public (int, int, ITile) GetTileFromScreenCoord(Vector2f fractionalScreenCoord)
         {
-            var xCoord = (int)(fractionalScreenCoord.X * (1+_tiles.Max(a => a.X)));
-            var yCoord = (int)(fractionalScreenCoord.Y * (1+_tiles.Max(a => a.Y)));
+            var xCoord = (int)(fractionalScreenCoord.X * (1 + _tiles.Max(a => a.X)));
+            var yCoord = (int)(fractionalScreenCoord.Y * (1 + _tiles.Max(a => a.Y)));
             return (xCoord, yCoord, GetTile(xCoord, yCoord));
         }
 

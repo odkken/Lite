@@ -12,17 +12,18 @@ namespace Lite.Lib
         private IBoard _board;
         private readonly Action<int, int, ITile> _editTileAction;
         private readonly IInput _input;
-        private readonly Func<Vector2f> _getTileSize;
+        private readonly ITileFactory _tileFactory;
+        private readonly Func<Vector2i, int> _getTileSize;
         
-        public EditableBoard(IBoard board, Action<int, int, ITile> editTileAction, IInput input, Func<Vector2f> getTileSize, Func<Vector2i, Vector2f> getScreenPos, Func<Vector2f> getBoardSize, Func<Vector2i> getBoardOffset)
+        public EditableBoard(IBoard board, Action<int, int, ITile> editTileAction, IInput input, ITileFactory tileFactory, Func<Vector2i> getBoardSize, Func<Vector2i> getBoardOffset, Func<Vector2i, int> getTileSize)
         {
             _board = board;
             _editTileAction = editTileAction;
             _input = input;
-            _getTileSize = getTileSize;
-            _getScreenPos = getScreenPos;
+            _tileFactory = tileFactory;
             _getBoardSize = getBoardSize;
             _getBoardOffset = getBoardOffset;
+            _getTileSize = getTileSize;
         }
 
         public void Draw(RenderTarget target, RenderStates states)
@@ -39,8 +40,7 @@ namespace Lite.Lib
         }
 
         private ITile _highlightTile;
-        private readonly Func<Vector2i, Vector2f> _getScreenPos;
-        private readonly Func<Vector2f> _getBoardSize;
+        private readonly Func<Vector2i> _getBoardSize;
         private readonly Func<Vector2i> _getBoardOffset;
 
         public void Update(float dt)
@@ -55,9 +55,10 @@ namespace Lite.Lib
             var fractionalMousePos = new Vector2f((float)((mousePos.X) * 1.0 / boardSize.X), (float)((mousePos.Y) * 1.0 / boardSize.Y));
 
             var (x, y, highlightedTile) = _board.GetTileFromScreenCoord(fractionalMousePos);
+            var tileSize = _getTileSize(Size);
             if (highlightedTile != null)
             {
-                _highlightTile = new KeyTile(new Vector2i(x, y), _getTileSize(), _getScreenPos);
+                _highlightTile = _tileFactory.CreateTile(x, y,  tileSize, Size, TileType.Key);
             }
         }
 
@@ -65,6 +66,8 @@ namespace Lite.Lib
         {
             _board.LoadLevel(name);
         }
+
+        public Vector2i Size => _board.Size;
 
         public void ToggleEdit()
         {

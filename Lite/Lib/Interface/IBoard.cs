@@ -11,5 +11,6 @@ namespace Lite.Lib.Interface
         (int, int, ITile) GetTileFromScreenCoord(Vector2f fractionalScreenCoord);
         void Update(float dt);
         void LoadLevel(string name);
+        Vector2i Size { get; }
     }
 }

@@ -59,7 +59,7 @@ namespace Lite
         public static void Main()
         {
             var window = new RenderWindow(new VideoMode(1280, 720), "Lite");
-            window.SetVerticalSyncEnabled(true);
+            window.SetVerticalSyncEnabled(false);
             window.SetActive();
             window.Closed += (sender, eventArgs) => window.Close();
 
@@ -82,16 +82,29 @@ namespace Lite
                     case Keyboard.Key.R when gameInput.IsControlDown && _lastLevel != null:
                         LoadLevel(_lastLevel);
                         break;
-
                 }
             };
+            var getScreenPos = new Func<int, Vector2i, Vector2i, Vector2f>((tileSize, pos, boardSize) =>
+            {
+                var totalWidth = boardSize.X * tileSize;
+                var totalHeight = boardSize.Y * tileSize;
+                var halfWindowSize = (Vector2i)Core.WindowUtil.GetPixelSize(new Vector2f(.5f, .5f));
+                var origin = new Vector2i(halfWindowSize.X - totalWidth / 2, halfWindowSize.Y - totalHeight / 2);
+                return new Vector2f(origin.X + tileSize * pos.X, origin.Y + tileSize * pos.Y);
+            });
+            var getTileSize = new Func<Vector2i, int>(u =>
+            {
+                var ratio = Core.WindowUtil.GetPixelSize(new Vector2f(1.0f / u.X, 1.0f / u.Y));
+                return (int) Math.Min(ratio.X, ratio.Y);
+            });
+            var tileFactory = new TileFactory(getTileSize, getScreenPos);
 
-            var coreBoard = new Board(new TextLevelParser(gameInput));
-            _board = new EditableBoard(coreBoard, (i, i1, arg3) => coreBoard.SetTile(i, i1, arg3), editInput, () => coreBoard.TileSize, a => coreBoard.GetScreenPos(a), () => coreBoard.PixelSize, () => coreBoard.ScreenOffset);
-
+            var coreBoard = new Board(new TextLevelParser(gameInput, tileFactory, getScreenPos));
+            _board = new EditableBoard(coreBoard, (i, i1, arg3) => coreBoard.SetTile(i, i1, arg3), editInput,
+                tileFactory, () => coreBoard.PixelSize, () => coreBoard.ScreenOffset, getTileSize);
             ILogger logger = null;
             var consoleFont = new Font("fonts/consola.ttf");
-            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => (Vector2f)window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont });
+            Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont });
 
             CommandRunner runner = null;
             _terminal = new Terminal(window, consoleFont, terminalInput, () => runner, s => string.IsNullOrWhiteSpace(s) ? new List<string>() : _commands.Where(a => a.Name.ToLower().Contains(s.ToLower())).Select(a => a.Name).OrderBy(a => a.Length).ToList());

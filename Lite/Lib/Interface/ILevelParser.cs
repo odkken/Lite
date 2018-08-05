@@ -6,6 +6,6 @@ namespace Lite.Lib.Interface
 {
     public interface ILevelParser
     {
-        (List<ITile>, Character, Vector2f, Func<Vector2i, Vector2f>) Parse(string levelName);
+        (List<ITile>, Character, Vector2i, Func<Vector2i, Vector2f>) Parse(string levelName);
     }
 }

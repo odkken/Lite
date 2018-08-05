@@ -8,13 +8,14 @@ namespace Lite.Lib.GameCore
     {
         FloatRect GetFractionalRect(FloatRect floatRect);
         Vector2f GetPixelSize(Vector2f fractionalWindowSize);
+        Vector2u WindowSize { get; }
     }
 
     class WindowUtilUtil : IWindowUtil
     {
-        private readonly Func<Vector2f> _getWindowSize;
+        private readonly Func<Vector2u> _getWindowSize;
 
-        public WindowUtilUtil(Func<Vector2f> getWindowSize)
+        public WindowUtilUtil(Func<Vector2u> getWindowSize)
         {
             _getWindowSize = getWindowSize;
         }
@@ -30,5 +31,7 @@ namespace Lite.Lib.GameCore
             var ws = _getWindowSize();
             return new Vector2f(fractionalWindowSize.X * ws.X, fractionalWindowSize.Y * ws.Y);
         }
+
+        public Vector2u WindowSize => _getWindowSize();
     }
 }
