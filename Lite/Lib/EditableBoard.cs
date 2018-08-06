@@ -1,30 +1,34 @@
 ﻿using System;
-using System.Numerics;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using SFML.Graphics;
 using SFML.System;
-using SFML.Window;
 
 namespace Lite.Lib
 {
     class EditableBoard : IEditableBoard
     {
         private IBoard _board;
-        private readonly Action<int, int, ITile> _editTileAction;
         private readonly IInput _input;
         private readonly ITileFactory _tileFactory;
         private readonly Func<Vector2i, int> _getTileSize;
 
         public EditPanel EditPanel { get; }
 
-        public EditableBoard(IBoard board, Action<int, int, ITile> editTileAction, IInput input,
+        public EditableBoard(IBoard board, IInput input,
             ITileFactory tileFactory, Func<Vector2i> getBoardSize, Func<Vector2i> getBoardOffset,
-            Func<Vector2i, int> getTileSize, Func<TileType, Color> colorGet)
+            Func<Vector2i, int> getTileSize, Func<TileType, Color> colorGet, Action<int, int, ITile> setTile)
         {
             _board = board;
-            _editTileAction = editTileAction;
             _input = input;
+            _input.MouseButtonDown += args =>
+            {
+                if (_highlightTile != null)
+                {
+                    setTile(_highlightTile.X, _highlightTile.Y, _highlightTile);
+                    _highlightTile = null;
+                }
+            };
             _tileFactory = tileFactory;
             _getBoardSize = getBoardSize;
             _getBoardOffset = getBoardOffset;
@@ -38,7 +42,7 @@ namespace Lite.Lib
             if (!IsEditing)
                 return;
             _highlightTile?.Draw(target, states);
-            EditPanel.Draw(target,states);
+            EditPanel.Draw(target, states);
         }
 
         public (int, int, ITile) GetTileFromScreenCoord(Vector2f fractionalScreenCoord)

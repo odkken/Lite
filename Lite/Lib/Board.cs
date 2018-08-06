@@ -65,12 +65,12 @@ namespace Lite.Lib
             _character?.Update(dt);
         }
 
-        public void SetTile(int i, int i1, ITile arg3)
+        public void SetTile(int i, int i1, ITile tile)
         {
             var existing = _tiles.SingleOrDefault(a => a.X == i && a.Y == i1);
             if (existing != null)
                 _tiles.Remove(existing);
-            _tiles.Add(arg3);
+            _tiles.Add(tile);
         }
     }
 }

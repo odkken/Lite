@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Numerics;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.System;
 
 namespace Lite.Lib.Interface

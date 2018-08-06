@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
 using Lite.Lib;
 using Lite.Lib.GameCore;
@@ -100,8 +99,8 @@ namespace Lite
             var tileFactory = new TileFactory(getTileSize, getScreenPos);
 
             var coreBoard = new Board(new TextLevelParser(gameInput, tileFactory, getScreenPos));
-            _board = new EditableBoard(coreBoard, (i, i1, arg3) => coreBoard.SetTile(i, i1, arg3), editInput,
-                tileFactory, () => coreBoard.PixelSize, () => coreBoard.ScreenOffset, getTileSize, type => Tile.ColorLookup[type].Item1);
+            _board = new EditableBoard(coreBoard, editInput,
+                tileFactory, () => coreBoard.PixelSize, () => coreBoard.ScreenOffset, getTileSize, type => Tile.ColorLookup[type].Item1, coreBoard.SetTile);
             ILogger logger = null;
             var consoleFont = new Font("fonts/consola.ttf");
             Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont });
