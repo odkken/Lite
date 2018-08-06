@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using System.Collections.Generic;
+using SFML.Graphics;
 using SFML.System;
 
 namespace Lite.Lib.Interface
@@ -7,7 +8,8 @@ namespace Lite.Lib.Interface
     {
         (int, int, ITile) GetTileFromScreenCoord(Vector2f fractionalScreenCoord);
         void Update(float dt);
-        void LoadLevel(string name);
+        bool LoadLevel(string name);
         Vector2i Size { get; }
+        IEnumerable<ITile> Tiles { get; }
     }
 }

@@ -5,6 +5,7 @@
         Walkable,
         Unused,
         Key,
-        Goal
+        Goal,
+        CharacterSpawn
     }
 }

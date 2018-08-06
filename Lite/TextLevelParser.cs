@@ -14,19 +14,21 @@ namespace Lite
     {
         private readonly IInput _input;
         private readonly ITileFactory _tileFactory;
-        private Func<int, Vector2i, Vector2i, Vector2f> _getScreenPos;
+        private readonly Func<char, TileType> _typeResolver;
+        private readonly Func<int, Vector2i, Vector2i, Vector2f> _getScreenPos;
 
-        public TextLevelParser(IInput input, ITileFactory tileFactory, Func<int, Vector2i, Vector2i, Vector2f> getScreenPos)
+        public TextLevelParser(IInput input, ITileFactory tileFactory, Func<char, TileType> typeResolver, Func<int, Vector2i, Vector2i, Vector2f> getScreenPos)
         {
             _input = input;
             _tileFactory = tileFactory;
+            _typeResolver = typeResolver;
             _getScreenPos = getScreenPos;
         }
 
         public (List<ITile>, Character, Vector2i, Func<Vector2i, Vector2f>) Parse(string levelName)
         {
             var allLevels = Directory.EnumerateFiles($"..\\..\\..\\levels/").Select(a => new FileInfo(a));
-            var levelToLoad = allLevels.Single(a => a.Name.ToLower() == $"{levelName}.txt").FullName;
+            var levelToLoad = allLevels.Single(a => a.Name.ToLower() == $"{levelName}.txt" || a.Name.ToLower() == $"{levelName}.lev").FullName;
             var lines = File.ReadAllLines(levelToLoad);
             var rows = lines.Length;
             var cols = lines.Select(a => a.Length).Max();
@@ -46,21 +48,16 @@ namespace Lite
                     {
                         ITile tile;
                         var pv = new Vector2i(j, i);
-                        switch (lines[i][j])
+                        var type = _typeResolver(lines[i][j]);
+                        switch (type)
                         {
-                            case 'x':
-                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Unused);
+                            case TileType.Goal:
+                            case TileType.Key:
+                            case TileType.Unused:
+                            case TileType.Walkable:
+                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, type);
                                 break;
-                            case 's':
-                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Key);
-                                break;
-                            case 'o':
-                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Walkable);
-                                break;
-                            case 'g':
-                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Goal);
-                                break;
-                            case 'c':
+                            case TileType.CharacterSpawn:
                                 character = new Character(_input, new Vector2i(tileSize, tileSize),
                                     new List<RectWithIntPosition>
                                     {
@@ -78,7 +75,7 @@ namespace Lite
                                         tiles.RemoveAll(a => a.X == item.X && a.Y == item.Y);
                                         tiles.Add(_tileFactory.CreateTile(item.X, item.Y, tileSize, boardSize, TileType.Walkable));
                                     });
-                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Walkable);
+                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.CharacterSpawn);
                                 characterFound = true;
                                 break;
                             default: throw new Exception($"unknown character '{lines[i][j]}'");
@@ -93,6 +90,7 @@ namespace Lite
             {
                 Core.Logger.Log($"Error parsing level {levelName} (i,j) = {i},{j}:\n{e.Message}\n{e.StackTrace}", Category.Error);
                 tiles.Clear();
+                throw e;
             }
 
             return (tiles, character, new Vector2i(tileSize, tileSize), vector2I => _getScreenPos(tileSize, vector2I, boardSize));

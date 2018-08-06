@@ -14,6 +14,7 @@ namespace Lite
         public static Dictionary<TileType, Tuple<Color, Color>> ColorLookup = new Dictionary<TileType, Tuple<Color, Color>>
         {
             [TileType.Walkable] = Tuple.Create(new Color(150, 150, 150), Color.White),
+            [TileType.CharacterSpawn] = Tuple.Create(new Color(150, 150, 150), Color.White),
             [TileType.Key] = Tuple.Create(Color.Cyan, Color.White),
             [TileType.Goal] = Tuple.Create(new Color(Color.Cyan.R, Color.Cyan.G, Color.Cyan.B, 100), Color.Cyan),
             [TileType.Unused] = Tuple.Create(Color.Black, Color.White)

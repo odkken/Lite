@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using SFML.Graphics;
@@ -12,12 +13,13 @@ namespace Lite.Lib
         private readonly IInput _input;
         private readonly ITileFactory _tileFactory;
         private readonly Func<Vector2i, int> _getTileSize;
+        private readonly ILevelSaver _saver;
 
         public EditPanel EditPanel { get; }
 
         public EditableBoard(IBoard board, IInput input,
             ITileFactory tileFactory, Func<Vector2i> getBoardSize, Func<Vector2i> getBoardOffset,
-            Func<Vector2i, int> getTileSize, Func<TileType, Color> colorGet, Action<int, int, ITile> setTile)
+            Func<Vector2i, int> getTileSize, Func<TileType, Color> colorGet, Action<int, int, ITile> setTile, ILevelSaver saver)
         {
             _board = board;
             _input = input;
@@ -33,6 +35,7 @@ namespace Lite.Lib
             _getBoardSize = getBoardSize;
             _getBoardOffset = getBoardOffset;
             _getTileSize = getTileSize;
+            _saver = saver;
             EditPanel = new EditPanel(input, () => IsEditing, colorGet);
         }
 
@@ -53,6 +56,7 @@ namespace Lite.Lib
         private ITile _highlightTile;
         private readonly Func<Vector2i> _getBoardSize;
         private readonly Func<Vector2i> _getBoardOffset;
+        private string _lastLevel;
 
         public void Update(float dt)
         {
@@ -73,9 +77,12 @@ namespace Lite.Lib
             }
         }
 
-        public void LoadLevel(string name)
+        public bool LoadLevel(string name)
         {
-            _board.LoadLevel(name);
+            if (!_board.LoadLevel(name)) return false;
+
+            _lastLevel = name;
+            return true;
         }
 
         public Vector2i Size => _board.Size;
@@ -91,5 +98,11 @@ namespace Lite.Lib
         }
 
         public bool IsEditing { get; set; }
+        public void SaveLevel(string levelName)
+        {
+            _saver.SaveLevel(Tiles, levelName ?? _lastLevel);
+        }
+
+        public IEnumerable<ITile> Tiles => _board.Tiles;
     }
 }

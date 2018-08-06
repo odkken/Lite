@@ -46,6 +46,19 @@ namespace Lite
         }
 
         [Command]
+        public static void Save()
+        {
+            _board.SaveLevel();
+        }
+
+
+        [Command]
+        public static void SaveAs(string levelName)
+        {
+            _board.SaveLevel(levelName);
+        }
+
+        [Command]
         public static void ToggleEdit()
         {
             _board.ToggleEdit();
@@ -98,9 +111,18 @@ namespace Lite
             });
             var tileFactory = new TileFactory(getTileSize, getScreenPos);
 
-            var coreBoard = new Board(new TextLevelParser(gameInput, tileFactory, getScreenPos));
+            var charMapping = new Dictionary<char, TileType>
+            {
+                ['c'] = TileType.CharacterSpawn,
+                ['g'] = TileType.Goal,
+                ['x'] = TileType.Unused,
+                ['o'] = TileType.Walkable,
+                ['s'] = TileType.Key,
+            };
+
+            var coreBoard = new Board(new TextLevelParser(gameInput, tileFactory, c => charMapping[c], getScreenPos));
             _board = new EditableBoard(coreBoard, editInput,
-                tileFactory, () => coreBoard.PixelSize, () => coreBoard.ScreenOffset, getTileSize, type => Tile.ColorLookup[type].Item1, coreBoard.SetTile);
+                tileFactory, () => coreBoard.PixelSize, () => coreBoard.ScreenOffset, getTileSize, type => Tile.ColorLookup[type].Item1, coreBoard.SetTile, new TextLevelSaver(type => charMapping.Single(a => a.Value == type).Key, $"..\\..\\..\\levels/"));
             ILogger logger = null;
             var consoleFont = new Font("fonts/consola.ttf");
             Core.Initialize(timeInfo, gameInput, new WindowUtilUtil(() => window.Size), () => logger, new TextInfo() { DefaultFont = consoleFont });

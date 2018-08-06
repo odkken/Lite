@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
 using SFML.Graphics;
 using SFML.System;
@@ -18,19 +19,30 @@ namespace Lite.Lib
             _levelParser = levelParser;
         }
 
-        public void LoadLevel(string levelName)
+        public bool LoadLevel(string levelName)
         {
-            (_tiles, _character, TileSize, GetScreenPos) = _levelParser.Parse(levelName);
+            try
+            {
+                (_tiles, _character, TileSize, GetScreenPos) = _levelParser.Parse(levelName);
+            }
+            catch (Exception e)
+            {
+                Core.Logger.Log(e.Message, Category.Error);
+                return false;
+            }
+
             var minX = _tiles.Min(a => a.PixelPosition.X);
             var minY = _tiles.Min(a => a.PixelPosition.Y);
             var maxX = _tiles.Max(a => a.PixelPosition.X);
             var maxY = _tiles.Max(a => a.PixelPosition.Y);
             ScreenOffset = new Vector2i(minX, minY);
             PixelSize = new Vector2i(maxX - minX + TileSize.X, maxY - minY + TileSize.Y);
-            Size = new Vector2i(_tiles.Max(a=> a.X)+1, _tiles.Max(a=> a.Y)+1);
+            Size = new Vector2i(_tiles.Max(a => a.X) + 1, _tiles.Max(a => a.Y) + 1);
+            return true;
         }
 
         public Vector2i Size { get; set; }
+        public IEnumerable<ITile> Tiles => _tiles;
 
         public Vector2i ScreenOffset { get; private set; }
         public Vector2i PixelSize { get; private set; }
