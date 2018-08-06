@@ -8,7 +8,7 @@ namespace Lite.Lib.GameCore
 {
     public class WindowWrapperInput : IInput
     {
-        private Dictionary<Keyboard.Key, bool> _lastFramePressLookup = new Dictionary<Keyboard.Key, bool>();
+        private readonly Dictionary<Keyboard.Key, bool> _lastFramePressLookup = new Dictionary<Keyboard.Key, bool>();
         private Window _window;
         public event Action<TextEventArgs> TextEntered;
         public bool IsControlDown => Keyboard.IsKeyPressed(Keyboard.Key.LControl) || Keyboard.IsKeyPressed(Keyboard.Key.RControl);
@@ -50,7 +50,7 @@ namespace Lite.Lib.GameCore
         public Vector2f GetMousePos()
         {
             var mpos = GetMousePosAbsolute();
-            return new Vector2f((float) (mpos.X * 1.0 / _window.Size.X), (float) (mpos.Y * 1.0 / _window.Size.Y));
+            return new Vector2f((float)(mpos.X * 1.0 / _window.Size.X), (float)(mpos.Y * 1.0 / _window.Size.Y));
         }
 
         public bool WasKeyPressed(Keyboard.Key key)

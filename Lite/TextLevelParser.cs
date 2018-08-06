@@ -49,7 +49,8 @@ namespace Lite
                         switch (lines[i][j])
                         {
                             case 'x':
-                                continue;
+                                tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Unused);
+                                break;
                             case 's':
                                 tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Key);
                                 break;
@@ -71,11 +72,11 @@ namespace Lite
                                                 FillColor = Color.Cyan
                                             }
                                         }
-                                    }, vector2I => _getScreenPos(tileSize, vector2I, boardSize), vector2I => tiles.Any(a => a.X == vector2I.X && a.Y == vector2I.Y), -1,
+                                    }, vector2I => _getScreenPos(tileSize, vector2I, boardSize), vector2I => tiles.Any(a => a.X == vector2I.X && a.Y == vector2I.Y && a.Type != TileType.Unused), -1,
                                     pos => tiles.Where(a => a.Type == TileType.Key && (new Vector2i(a.X, a.Y) - pos).SquareMagnitude() == 1).Select(a => new Vector2i(a.X, a.Y)).ToList(), item =>
                                     {
                                         tiles.RemoveAll(a => a.X == item.X && a.Y == item.Y);
-                                        tiles.Add(_tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Walkable));
+                                        tiles.Add(_tileFactory.CreateTile(item.X, item.Y, tileSize, boardSize, TileType.Walkable));
                                     });
                                 tile = _tileFactory.CreateTile(pv.X, pv.Y, tileSize, boardSize, TileType.Walkable);
                                 characterFound = true;

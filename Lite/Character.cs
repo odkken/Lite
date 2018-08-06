@@ -55,6 +55,9 @@ namespace Lite
             if (_input.IsKeyDown(Keyboard.Key.D) || _input.IsKeyDown(Keyboard.Key.Right))
                 delta.X++;
 
+            if (delta.SquareMagnitude() == 0)
+                return;
+
             foreach (var rectWithIntPosition in _rects)
             {
                 var newPos = rectWithIntPosition.Position + delta;
@@ -86,8 +89,7 @@ namespace Lite
                 if (!rectsToAdd.Any())
                     break;
             }
-            if (delta.SquareMagnitude() != 0)
-                _lastMoveTime = time;
+            _lastMoveTime = time;
         }
 
         public void Draw(RenderTarget target, RenderStates states)

@@ -8,29 +8,29 @@ namespace Lite
 {
     public class Tile : ITile
     {
-        public const int OutlineThickness = -2;
         private readonly Func<int, Vector2i, Vector2f> _getScreenPos;
         private readonly RectangleShape _rect;
 
-        private static Dictionary<TileType, Tuple<Color, Color>> _colorLookup = new Dictionary<TileType, Tuple<Color, Color>>
+        public static Dictionary<TileType, Tuple<Color, Color>> ColorLookup = new Dictionary<TileType, Tuple<Color, Color>>
         {
             [TileType.Walkable] = Tuple.Create(new Color(150, 150, 150), Color.White),
             [TileType.Key] = Tuple.Create(Color.Cyan, Color.White),
-            [TileType.Goal] = Tuple.Create(Color.Black, Color.Cyan),
+            [TileType.Goal] = Tuple.Create(new Color(Color.Cyan.R, Color.Cyan.G, Color.Cyan.B, 100), Color.Cyan),
             [TileType.Unused] = Tuple.Create(Color.Black, Color.White)
         };
 
         public Tile(Vector2i position, Vector2f size, Func<int, Vector2i, Vector2f> getScreenPos, TileType type)
         {
+            Type = type;
             X = position.X;
             Y = position.Y;
             _getScreenPos = getScreenPos;
-            var color = _colorLookup[type];
+            var color = ColorLookup[type];
             _rect = new RectangleShape(size)
             {
                 FillColor = color.Item1,
                 OutlineColor = color.Item2,
-                OutlineThickness = OutlineThickness,
+                OutlineThickness = -2,
                 Position = _getScreenPos((int) size.X, new Vector2i(X, Y))
             };
         }
