@@ -58,13 +58,17 @@ namespace Lite
             if (delta.SquareMagnitude() == 0)
                 return;
 
-            foreach (var rectWithIntPosition in _rects)
+            bool CanMove(RectWithIntPosition r)
             {
-                var newPos = rectWithIntPosition.Position + delta;
-                if (!_canMoveTo(newPos)) return;
+                var newPos = r.Position + delta;
+                if (!_canMoveTo(newPos)) return false;
+                var existingRect = _rects.SingleOrDefault(a => a.Position == newPos);
+                return existingRect == null || CanMove(existingRect);
             }
 
-            foreach (var rectWithIntPosition in _rects)
+            var rectsToMove = _rects.Where(CanMove);
+
+            foreach (var rectWithIntPosition in rectsToMove)
             {
                 rectWithIntPosition.Position += delta;
             }

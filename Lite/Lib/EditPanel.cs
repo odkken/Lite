@@ -50,6 +50,7 @@ namespace Lite.Lib
             AddIcon(TileType.Goal);
             AddIcon(TileType.Key);
             AddIcon(TileType.Unused);
+            AddIcon(TileType.CharacterSpawn);
         }
 
         void AddIcon(TileType type)
