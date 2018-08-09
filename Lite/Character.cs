@@ -105,5 +105,10 @@ namespace Lite
             }
 
         }
+
+        public bool IsOn(int argX, int argY)
+        {
+            return _rects.Any(a => a.Position.X == argX && a.Position.Y == argY);
+        }
     }
 }

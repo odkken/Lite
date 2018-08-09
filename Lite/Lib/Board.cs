@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Lite.Lib.GameCore;
 using Lite.Lib.Interface;
+using SFML.Audio;
 using SFML.Graphics;
 using SFML.System;
 
@@ -38,6 +40,7 @@ namespace Lite.Lib
             ScreenOffset = new Vector2i(minX, minY);
             PixelSize = new Vector2i(maxX - minX + TileSize.X, maxY - minY + TileSize.Y);
             Size = new Vector2i(_tiles.Max(a => a.X) + 1, _tiles.Max(a => a.Y) + 1);
+            _solved = false;
             return true;
         }
 
@@ -71,10 +74,25 @@ namespace Lite.Lib
             var yCoord = (int)(fractionalScreenCoord.Y * (1 + _tiles.Max(a => a.Y)));
             return (xCoord, yCoord, GetTile(xCoord, yCoord));
         }
+        static readonly SoundBuffer WinSound = new SoundBuffer(@"..\\..\\..\\sounds\winnore.ogg");
+        static readonly Sound Sound = new Sound(WinSound);
+        private bool _solved;
 
         public void Update(float dt)
         {
+            if (_solved)
+            {
+                if (Sound.Status != SoundStatus.Playing)
+                    LoadLevel("corner");
+                return;
+            }
+
             _character?.Update(dt);
+            if (_tiles.Where(a => a.Type == TileType.Goal).All(a => _character.IsOn(a.X, a.Y)))
+            {
+                Sound.Play();
+                _solved = true;
+            }
         }
 
         public void SetTile(int i, int i1, ITile tile)
